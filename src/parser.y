@@ -14,30 +14,9 @@
     float f; // float value
     char c; // char value
 }
-%token <i> INTEGER
-%type <i> S E T F
 
 /* C production rules */
-
 %%
-
-S:E{ printf("Result: %d\n", $1);}
-;
-
-E:E '+' T {$$ = $1 + $3;}
-| E '-' T {$$ = $1 - $3;}
-| T {$$ = $1;}
-;
-
-T:T '*' F {$$ = $1 * $3;}
-| T '/' F {if($3 == 0){ yyerror("division by zero");}$$ = $1 / $3;}
-| F {$$ = $1;}
-;
-
-F:'(' E ')' {$$ = $2;}
-| '-' F {$$ = -$2;}
-| INTEGER {$$ = $1;}
-;
 %%
 
 
