@@ -1,0 +1,39 @@
+## VS Code specific
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/c_cpp_properties.json
+!.vscode/tasks.json
+
+## Generated parser files
+parser.tab.c
+parser.tab.h
+parser.output
+
+## Build artifacts
+*.o
+*.exe
+*.out
+*.a
+*.so
+*.dll
+
+## Executables
+a.out
+lex.yy.c
+
+## Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+## Local development files
+*.local
+*.log
+*.tmp
+
+## Dependency directories
+deps/
+build/
+bin/
