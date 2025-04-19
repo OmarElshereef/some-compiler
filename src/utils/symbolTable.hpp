@@ -9,8 +9,8 @@ using namespace std;
 #ifndef SYMBOLTABLE_HPP
 #define SYMBOLTABLE_HPP
 
-enum symbolType {FLOATtype, INTtype, BOOLtype, CHARtype, STRINGtype, CONSTtype, VOIDtype, UNKNOWN};
-const vector<string> symbolTypeName = {"FLOAT", "INT", "BOOL", "CHAR", "STRING", "CONST", "VOID", "UNKNOWN"};
+enum symbolType {LINTtype, LLINTtype, DOUBLEtype, FLOATtype, INTtype, BOOLtype, CHARtype, STRINGtype, CONSTtype, VOIDtype, UNKNOWN};
+const vector<string> symbolTypeName = {"FLOAT", "INT", "BOOL", "CHAR", "STRING", "CONST", "VOID", "UNKNOWN"و "LLINT", "LINT", "DOUBLE"};
 
 class constNode {
 public:
@@ -23,8 +23,27 @@ public:
             case INTtype:
                 this->ival = stoi(value);
                 break;
+            case LINTtype:
+                this->lival = stol(value);
+                break;
+            case LLINTtype:
+                this->llival = stoll(value);
+                break;
+            case BOOLtype:
+                if (value == "true") {
+                    this->bval = true;
+                } else if (value == "false") {
+                    this->bval = false;
+                } else {
+                    value = bool(value);
+                    this->bval = value;
+                }
+                break;
             case FLOATtype:
                 this->fval = stof(value);
+                break;
+            case DOUBLEtype:
+                this->dval = stod(value);
                 break;
             case CHARtype:
                 this->cval = value[0];
@@ -32,6 +51,11 @@ public:
             case STRINGtype:
                 this->sval = value;
                 break;
+            case VOIDtype:
+                this->pval = NULL;
+                break;
+            // case CONSTtype:
+            // case UNKNOWN:
             default:
                 break;
         }
@@ -44,7 +68,12 @@ public:
         char cval;
         string sval;
         int ival;
+        long int lival;
+        long long int llival;
+        bool bval;
         float fval;
+        double dval;
+        void* pval;
     };
     ~constNode() {}
 };

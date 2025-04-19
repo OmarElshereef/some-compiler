@@ -22,10 +22,10 @@
 }
 
 /* Keywords */
-%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE RETURN
+%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE FUNC RETURN
 
 /* Data types */
-%token CONST INT FLOAT CHAR STRING BOOL VOID
+%token CONST INT FLOAT CHAR DOUBLE VOID STRING BOOL LINT LLINT
 
 /* Boolean values */
 %token TRUE FALSE
@@ -45,11 +45,8 @@
 /* Bitwise operators */
 %token BIT_AND BIT_OR BIT_XOR
 
-/* COMMENT tokens */
-%token COMMENT
-
 /* Associativity: https://en.cppreference.com/w/cpp/language/operator_precedence */
-%right ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN
+%right  ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN
 %left   OR
 %left   AND
 %left   BIT_XOR
@@ -61,20 +58,18 @@
 %left   MUL DIV MOD
 %right  NOT
 %left   INC DEC
-%left FUNC
+%left   FUNC
 
 /* Other tokens */
 %token <sval> ID
-%token <sval> INT_CONST
-%token <sval> FLOAT_CONST
-%token <sval> STRING_CONST
-%token <sval> CHAR_CONST
+%token <sval> LLINT_CONST LINT_CONST INT_CONST FLOAT_CONST DOUBLE_CONST
+%token <sval> STRING_CONST CHAR_CONST
 
 %type <sval> function_declaration_prototype
-%type <sval> one_level_if_statement
+%type <sval> if_statement one_level_if_statement
 %type <symboll> for_loop_condition
 %type <symboll> evaluate_expression 
-%type <symboll> math_or_value  
+%type <symboll> math_or_value
 %type <symboll> expression 
 %type <symboll> condition 
 %type <symboll> unary_expression
@@ -82,7 +77,8 @@
 %type <symboll> assignment
 %type <symboll> initialization
 %type <symboll> function_call
-%type <symbolTypeType> type
+%type <sval> integer_value numeric_value
+%type <symbolTypeType> type integer_type numeric_type
 %type <operationName> assign
 
 
@@ -138,12 +134,12 @@ for_loop :
         ;
 
 for_loop_initialization :
-    INT ID ASSIGN INT_CONST {
-                                symbTable.addOrUpdateSymbol(string($2), symbolType::INTtype, new symbol(string($4), symbolType::INTtype, 1,1), 0, 1);
+    integer_type ID ASSIGN integer_value {
+                                symbTable.addOrUpdateSymbol(string($2), $1, new symbol(string($4), $1, 1, 1), 0, 1);
                             }
     |
-    ID ASSIGN INT_CONST     {
-                                symbTable.addOrUpdateSymbol(string($1), symbolType::UNKNOWN, new symbol(string($3), symbolType::INTtype, 1,1), 0, 1);
+    ID ASSIGN integer_value     {
+                                symbTable.addOrUpdateSymbol(string($1), $1, new symbol(string($3), $1, 1,1), 0, 1);
                             }
     ;
 
@@ -176,21 +172,155 @@ one_level_if_statement :
                           {symbTable.changeScope(0);}
     ;
 
+switch_statement :
+    SWITCH '(' expression ')' {symbTable.changeScope(1);} 
+                             '{' switch_case '}' 
+                             {symbTable.changeScope(0);}
+    ;
+
+switch_case :
+    CASE literal ':' {symbTable.changeScope(1);} 
+                program  BREAK ';'
+                {symbTable.changeScope(0);}
+    |
+    DEFAULT ':' {symbTable.changeScope(1);} 
+                program  BREAK ';'
+                {symbTable.changeScope(0);}
+    ;
+
+expression :
+    literal {$$ = $1;}
+    |
+    math_or_value {$$ = $1;}
+    |
+    '(' expression ')' {$$ = $2;}
+    |
+    unary_expression {$$ = $1;}
+    |
+    function_call {$$ = $1;}
+    ;
+
+condition :
+    expression {$$ = $1;}
+    |
+    expression EQ expression {$$ = new symbol($1->value == $3->value, symbolType::BOOLtype, 1,1);}
+    |
+    expression NEQ expression {$$ = new symbol($1->value != $3->value, symbolType::BOOLtype, 1,1);}
+    |
+    expression LT expression {$$ = new symbol($1->value < $3->value, symbolType::BOOLtype, 1,1);}
+    |
+    expression GT expression {$$ = new symbol($1->value > $3->value, symbolType::BOOLtype, 1,1);}
+    |
+    expression LTE expression {$$ = new symbol($1->value <= $3->value, symbolType::BOOLtype, 1,1);}
+    |
+    expression GTE expression {$$ = new symbol($1->value >= $3->value, symbolType::BOOLtype, 1,1);}
+    |
+    '(' condition ')' {$$ = $2;}
+    |
+    NOT condition {$$ = new symbol(!$2->value, symbolType::BOOLtype, 1,1);}
+    |
+    condition AND condition {$$ = new symbol($1->value && $3->value, symbolType::BOOLtype, 1,1);}
+    |
+    condition OR condition {$$ = new symbol($1->value || $3->value, symbolType::BOOLtype, 1,1);}
+    ;
+
+math_or_value : 
+    math_or_value PLUS math_or_value {$$ = new symbol($1->value + $3->value, $1->type, 1,1);}
+    |
+    math_or_value MINUS math_or_value {$$ = new symbol($1->value - $3->value, $1->type, 1,1);}
+    |
+    math_or_value MUL math_or_value {$$ = new symbol($1->value * $3->value, $1->type, 1,1);}
+    |
+    math_or_value DIV math_or_value {
+            if($3->value == 0){
+                yyerror("Division by zero error");
+            } else {
+                $$ = new symbol($1->value / $3->value, $1->type, 1,1);
+            }
+        }
+    |
+    math_or_value MOD math_or_value {
+        if($3->value == 0){
+                yyerror("Division by zero error");
+        } else {
+            $$ = new symbol($1->value % $3->value, $1->type, 1,1);
+        }
+    }
+    |
+    math_or_value BIT_AND math_or_value {$$ = new symbol($1->value & $3->value, $1->type, 1,1);}
+    |
+    math_or_value BIT_OR math_or_value {$$ = new symbol($1->value | $3->value, $1->type, 1,1);}
+    |
+    math_or_value BIT_XOR math_or_value {$$ = new symbol($1->value ^ $3->value, $1->type, 1,1);}
+    |
+    '(' math_or_value ')' {$$ = $2;}
+    |
+    MINUS math_or_value {$$ = new symbol(-$2->value, $2->type, 1,1);}
+    |
+    numeric_value {$$ = $1;}
+    ;
+
+assignment :
+    type ID ASSIGN expression { symbTable.addOrUpdateSymbol(string($2), $1, $4, 0, 1); }
+    ;
 
 literal :
     ID                          {$$ = symbTable.setUsed(symbTable.findSymbol(string($1)));}
     |
-    INT_CONST                   {$$ = new symbol($1, symbolType::INTtype, 1,1);}
+    numeric_value               {$$ = new symbol($1, $1->type, 1,1);}
     |
-    FLOAT_CONST                 {$$ = new symbol($1, symbolType::FLOATtype, 1,1);}
-    |
-    CHAR_CONST                  {$$ = new symbol($1, symbolType::INTtype, 1,1);}
+    CHAR_CONST                  {$$ = new symbol($1, symbolType::CHARtype, 1,1);}
     |
     STRING_CONST                {$$ = new symbol($1, symbolType::STRINGtype, 1,1);}
     |
     TRUE                        {$$ = new symbol("true", symbolType::BOOLtype,1,1);}
     |
     FALSE                       {$$ = new symbol("false", symbolType::BOOLtype,1,1);}
+    ;
+
+type : 
+    numeric_type {$$ = $1;}
+    |
+    CHAR {$$ = symbolType::CHARtype;}
+    |
+    STRING {$$ = symbolType::STRINGtype;}
+    |
+    BOOL {$$ = symbolType::BOOLtype;}
+    |
+    VOID {$$ = symbolType::VOIDtype;}
+    ;
+
+
+numeric_type :
+    integer_type {$$ = $1;}
+    |
+    FLOAT {$$ = symbolType::FLOATtype;}
+    |
+    DOUBLE {$$ = symbolType::DOUBLEtype;}
+    ;
+
+integer_type :
+    INT {$$ = symbolType::INTtype;}
+    |
+    LINT {$$ = symbolType::LINTtype;}
+    |
+    LLINT {$$ = symbolType::LLINTtype;}
+    ;
+
+numeric_value :
+    integer_value {$$ = $1;}
+    |
+    FLOAT_CONST   {$$ = new symbol($1, symbolType::FLOATtype, 1,1);}
+    |
+    DOUBLE_CONST  {$$ = new symbol($1, symbolType::DOUBLEtype, 1,1);}
+    ;
+
+integer_value :
+    INT_CONST               {$$ = new symbol($1, symbolType::INTtype, 1,1);}
+    |
+    LINT_CONST              {$$ = new symbol($1, symbolType::LINTtype, 1,1);}
+    |
+    LLINT_CONST             {$$ = new symbol($1, symbolType::LLINTtype, 1,1);}
     ;
 
 %%
