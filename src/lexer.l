@@ -16,34 +16,34 @@ ID	[a-zA-z][a-zA-z0-9_]*
 %%
 [ \t\n]+        { /* Ignore whitespace */ }
 /* mathematical operators */
-'+'             { return PLUS; }
-'-'             { return MINUS; }
-'*'             { return MUL; }
-'/'             { return DIV; }
-'%'             { return MOD; }
+"+"             { return PLUS; }
+"-"             { return MINUS; }
+"*"             { return MUL; }
+"/"             { return DIV; }
+"%"             { return MOD; }
 "++"            {return INC;}
 "--"            {return DEC;}
 
 /* assignment operators */
-'='             { return ASSIGN; }
-'+=             { return ADD_ASSIGN; }
-'-='            { return SUB_ASSIGN; }
-'*='            { return MUL_ASSIGN; }
-'/='            { return DIV_ASSIGN; }
+"=""             { return ASSIGN; }
+"+="             { return ADD_ASSIGN; }
+"-="            { return SUB_ASSIGN; }
+"*="            { return MUL_ASSIGN; }
+"/="            { return DIV_ASSIGN; }
 "%="            {return MOD_ASSIGN;}
 
 /* relational operators */
-'=='            { return EQ; }
-'!='            { return NEQ; }
-'<'             { return LT; }
-'>'             { return GT; }
-'<='            { return LTE; }
-'>='            { return GTE; }
+"=="            { return EQ; }
+"!="            { return NEQ; }
+"<"            { return LT; }
+">"            { return GT; }
+"<="            { return LTE; }
+">="            { return GTE; }
 
 /* logical operators */
-'!'             { return NOT; }
-'&&'            { return AND; }
-'||'            { return OR; }
+"!"             { return NOT; }
+"&&"            { return AND; }
+"||"            { return OR; }
 
 /* bitwise operators */
 "&"             {return BIT_AND;}
