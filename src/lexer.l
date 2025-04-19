@@ -56,7 +56,6 @@ ID	[a-zA-z][a-zA-z0-9_]*
 /* keywords */
 "if"            { return IF; }
 "else"          { return ELSE; }
-"else if"       { return ELSEIF; }
 "while"         { return WHILE; }
 "for"           { return FOR; }
 "return"        { return RETURN; }
