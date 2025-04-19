@@ -14,8 +14,8 @@
 ID	[a-zA-z][a-zA-z0-9_]*
 
 %%
-[ \t\n]+        { /* Ignore whitespace */ }
-/* mathematical operators */
+[ \t\n]+        {;}
+    /* mathematical operators */
 "+"             { return PLUS; }
 "-"             { return MINUS; }
 "*"             { return MUL; }
@@ -24,15 +24,15 @@ ID	[a-zA-z][a-zA-z0-9_]*
 "++"            {return INC;}
 "--"            {return DEC;}
 
-/* assignment operators */
-"=""             { return ASSIGN; }
+    /* assignment operators */
+"="             { return ASSIGN; }
 "+="             { return ADD_ASSIGN; }
 "-="            { return SUB_ASSIGN; }
 "*="            { return MUL_ASSIGN; }
 "/="            { return DIV_ASSIGN; }
 "%="            {return MOD_ASSIGN;}
 
-/* relational operators */
+    /* relational operators */
 "=="            { return EQ; }
 "!="            { return NEQ; }
 "<"            { return LT; }
@@ -40,20 +40,20 @@ ID	[a-zA-z][a-zA-z0-9_]*
 "<="            { return LTE; }
 ">="            { return GTE; }
 
-/* logical operators */
+    /* logical operators */
 "!"             { return NOT; }
 "&&"            { return AND; }
 "||"            { return OR; }
 
-/* bitwise operators */
+    /* bitwise operators */
 "&"             {return BIT_AND;}
 "|"             {return BIT_OR;}
 "^"             {return BIT_XOR;}
 
-/* semicolon and comma */
+    /* semicolon and comma */
 [;:,]       {return yytext[0];}
 
-/* keywords */
+    /* keywords */
 "if"            { return IF; }
 "else"          { return ELSE; }
 "while"         { return WHILE; }
@@ -63,8 +63,10 @@ ID	[a-zA-z][a-zA-z0-9_]*
 "switch"        { return SWITCH; }
 "case"          { return CASE; }
 "default"       { return DEFAULT; }
+"break"         {return BREAK;}
+"continue"      {return CONTINUE;}
 
-/* data types */
+    /* data types */
 "int"           { return INT; }
 "float"         { return FLOAT; }
 "char"          { return CHAR; }
@@ -74,31 +76,35 @@ ID	[a-zA-z][a-zA-z0-9_]*
 "string"        {return STRING;}
 "bool"          {return BOOL;}
 
-/* boolean values */
+    /* boolean values */
 "true"          {return TRUE;}
 "false"         {return FALSE;}
 
-/* identifiers */
+    /* identifiers */
 {ID}        {yylval.sval = strdup(yytext); return ID;}
 
 
-/* constants */
+    /* constants */
 (0|[1-9][0-9]*)             {yylval.sval = strdup(yytext); return INT_CONST;}
 (0|[1-9][0-9]*)\.[0-9]+     {yylval.sval = strdup(yytext); return FLOAT_CONST;}
 
-/* strings */
+    /* strings */
 (\"[^"]*\")                 {yylval.sval = strdup(yytext); return STRING_CONST;}
 
-/* characters */
+    /* characters */
 (\'[^\']\')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
 
-/* comments */
+    /* comments */
 (\/\/.*)                    ;
 (\/\*(.|\n|\r)*\*\/)        ;
 
-/* parentheses */
+    /* parentheses */
 [(){}\[\]]                {return yytext[0];}
 
-/* error */
+    /* error */
 .                           {printf("Error: Unrecognized token %s\n", yytext); exit(1);}
 %%
+
+int yywrap(void) {
+    return 1;
+}
