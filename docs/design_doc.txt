@@ -55,6 +55,7 @@ returnType funcName(args) {}
 types:
 
 float
+double
 int
 char
 string

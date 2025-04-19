@@ -1,0 +1,53 @@
+int sub(int x, int y) {
+    return x - y; 
+}
+
+int main() {
+    int num = 5;
+    int result = sub(num, 3);
+    
+    int x;
+    x = 10;
+    int y = x + 5;
+    char z = 0;
+    
+    if (x > y) {
+        x = 5;
+    }
+    else {
+        y = 5;
+    }
+
+    int option = 2;
+    switch (option) {
+        case 1:
+            x++;
+            break;
+        case 2:
+            y++;
+            break;
+        default:
+            z+=1;
+            break;
+    }
+    
+    int counter = 0;
+    do {
+        counter++;
+    } while (counter < 5);
+    
+    int j = 0;
+    while (j < 5) {
+        j++;
+    }
+
+    int sub = sub(5, 10);
+
+    for (int k = 0; k < 5; k++) {
+        sub+=1;
+    }
+    {
+        int x = 1;
+    }
+    return 0;
+}

@@ -2,30 +2,28 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
-    #include <cstring>
-    #include "utils/symbolTable.hpp"
+    #include <string.h>
+    #include "symbolTable.h"
 
-    symbolTable symbTable = symbolTable();
-    int symbolTable::numScopes = 0;
-    vector<vector<symbolTable*>> symbolTable::symbolTableAdj = vector<vector<symbolTable*>>(1,vector<symbolTable*>());
-    symbolTable* symbolTable::current = &symbTable;
+    void yyerror(char* s);
+    int yylex();
 
-    void yyerror(const char *s);
-    int yylex(void);
-    %}
+    _Bool inFunction = 0;
+%}
 
 %union {
+    char cval;
     char *sval;
-    symbol* symboll;
-    symbolType symbolTypeType;
-    operation operationName;
+    int ival;
+    float fval;
+    char *id;
 }
 
 /* Keywords */
 %token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE RETURN
 
 /* Data types */
-%token CONST INT FLOAT CHAR STRING BOOL VOID
+%token CONST INT FLOAT DOUBLE CHAR STRING BOOL VOID
 
 /* Boolean values */
 %token TRUE FALSE
@@ -64,26 +62,13 @@
 %left FUNC
 
 /* Other tokens */
-%token <sval> ID
-%token <sval> INT_CONST
-%token <sval> FLOAT_CONST
+%token <id> ID
+%token <ival> INT_CONST
+%token <fval> FLOAT_CONST
 %token <sval> STRING_CONST
-%token <sval> CHAR_CONST
+%token <cval> CHAR_CONST
 
-%type <sval> function_declaration_prototype
-%type <sval> one_level_if_statement
-%type <symboll> for_loop_condition
-%type <symboll> evaluate_expression 
-%type <symboll> math_or_value  
-%type <symboll> expression 
-%type <symboll> condition 
-%type <symboll> unary_expression
-%type <symboll> literal
-%type <symboll> assignment
-%type <symboll> initialization
-%type <symboll> function_call
-%type <symbolTypeType> type
-%type <operationName> assign
+%type <sval> type function_declaration_prototype
 
 
 /* Grammar */
@@ -95,7 +80,7 @@ program :
         ;
 
 statement :
-        declaration ';'           { printf("Declaration\n"); }
+        declaration ';'             { printf("Declaration\n"); }
         | 
         initialization ';'        { printf("Initialization\n"); }
         | 
@@ -116,103 +101,282 @@ statement :
         function_definition       { printf("Function_definition\n"); }
         | 
         function_call ';'         { printf("Function_call\n"); }
-        |
-        { printf("Scope start\n"); }          '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
+        | 
+        return_statement ';'      { if (!(inFunction)) yyerror("Return statement outside function"); }
+        | 
+        ID ';'                    { printf("ID\n"); }
+        | 
+        { printf("Scope start\n"); }          '{' program '}'           { printf("Scope end\n"); }
         ;
 
 do_loop :
-        DO {symbTable.changeScope(1);} 
-           '{' program '}' 
-           WHILE 
-           {symbTable.changeScope(0);} 
-           '(' expression ')'      {;}
+        DO '{' program '}' WHILE '(' expression ')'      {;}
         ;
 
 for_loop :
-        FOR {symbTable.changeScope(1);} 
-            '(' for_loop_initialization ';' 
-            for_loop_condition ';' 
-            for_loop_increment ')' 
-            '{' program '}' 
-            {symbTable.changeScope(0);}
+        FOR '(' for_loop_initialization ';' for_loop_condition ';' for_loop_increment ')' '{' program '}' {;}
         ;
 
 for_loop_initialization :
-    INT ID ASSIGN INT_CONST {
-                                symbTable.addOrUpdateSymbol(string($2), symbolType::INTtype, new symbol(string($4), symbolType::INTtype, 1,1), 0, 1);
-                            }
+    INT ID ASSIGN INT_CONST {;}
     |
-    ID ASSIGN INT_CONST     {
-                                symbTable.addOrUpdateSymbol(string($1), symbolType::UNKNOWN, new symbol(string($3), symbolType::INTtype, 1,1), 0, 1);
-                            }
+    ID ASSIGN INT_CONST     {;}
+    |
+                            {;}
     ;
 
 for_loop_condition :
-    expression            {$$ = $1;}
+    expression            {;}
+    |
+                          {;}
     ;
 
 for_loop_increment :
     expression            {;}
     |
     assignment            {;}
+    |
+                          {;}
     ;
 
 while_loop :
-    WHILE {;}  
-    '(' expression ')' {symbTable.changeScope(1);} 
-    '{' program '}'    {symbTable.changeScope(0);}
+    WHILE '(' expression ')' '{' program '}'     {;}
     ;
-
 
 if_statement :
-    one_level_if_statement {;}
+    IF '(' expression ')' '{' program '}'                                {;}
     |
-    one_level_if_statement ELSE {symbTable.changeScope(1);} '{' program '}' {symbTable.changeScope(0);}
+    IF '(' expression ')' '{' program '}' ELSE '{' program '}'           {;}
     ;
 
-one_level_if_statement :
-    IF '(' expression ')' {symbTable.changeScope(1);} 
-                          '{' program '}'    
-                          {symbTable.changeScope(0);}
+switch_statement :
+    SWITCH '(' ID ')' '{' switch_program '}'
+    ;
+
+switch_program :
+    case_statements
+    |
+    case_statements default_statement
+    |
+    default_statement
+    ;
+
+case_statements :
+    case_statements case_statement
+    |
+    case_statement
+    ;
+
+case_statement :
+    CASE literal ':' program BREAK ';'
+    ;
+
+default_statement :
+    DEFAULT ':' program BREAK ';'
+    ;
+
+function_definition :
+    function_declaration_prototype { inFunction = 1; } '{' program '}' { inFunction = 0; }
+    ;
+
+function_declaration_prototype : 
+    VOID ID '(' function_parameters_optional ')'  {;}
+    |
+    type ID '(' function_parameters_optional ')'  {;}
+    ;
+
+function_parameters_optional :
+    function_parameters             {;}
+    |
+                                    {;}
+    ;
+
+function_parameters :
+    function_parameters ',' function_parameter      {;}
+    |
+    function_parameter                              {;}
+    ;
+
+function_parameter:
+    type ID             {;}
+    ;
+
+return_statement :
+    RETURN expression   {;}
+    |
+    RETURN assignment   {;}
+    |
+    RETURN
+    ;
+
+function_call : 
+    ID '(' function_arguments_optional ')'                      %prec FUNC{;}
+    |
+    assignment '(' function_arguments_optional ')'            %prec FUNC{;}
+    |
+    initialization '(' function_arguments_optional ')'       %prec FUNC{;}
+    ;
+
+function_arguments_optional :
+    function_arguments      {;}
+    |
+                            {;}
+    ;
+
+function_arguments :
+    function_arguments ',' function_argument    {;}
+    |
+    function_argument                           {;}
+    ;
+
+function_argument :
+    literal            {;}
+    ;
+
+initialization :
+    CONST type ID ASSIGN expression  {;}
+    |
+    type ID ASSIGN expression        {;}
+    ;
+
+declaration :
+    CONST type ID   {;}
+    |
+    type ID         {;}
+    ;
+
+assignment :
+    ID assign expression     %prec ASSIGN{;}
+    ;
+
+assign :
+    ASSIGN          { printf("ASSIGN\n"); }
+    |
+    ADD_ASSIGN      { printf("ADD_ASSIGN\n"); }
+    |
+    SUB_ASSIGN      { printf("SUB_ASSIGN\n"); }
+    |
+    MUL_ASSIGN      { printf("MUL_ASSIGN\n"); }
+    |
+    DIV_ASSIGN      { printf("DIV_ASSIGN\n"); }
+    |
+    MOD_ASSIGN      { printf("MOD_ASSIGN\n"); }
+    ;
+
+type :
+    INT         { ; }
+    |
+    FLOAT       { ; }
+    |
+    CHAR        { ; }
+    |
+    STRING      { ; }
+    |
+    BOOL        { ; }
+    ;
+
+evaluate_expression :
+    evaluate_expression BIT_AND evaluate_expression         { printf("BIT_AND\n"); }
+    |
+    evaluate_expression BIT_OR evaluate_expression          { printf("BIT_OR\n"); }
+    |
+    evaluate_expression BIT_XOR evaluate_expression         { printf("BIT_XOR\n"); }
+    |
+    evaluate_expression PLUS evaluate_expression            { printf("PLUS\n"); }
+    |
+    evaluate_expression MINUS evaluate_expression           { printf("MINUS\n"); }
+    |
+    evaluate_expression MUL evaluate_expression             { printf("MUL\n"); }
+    |
+    evaluate_expression DIV evaluate_expression             { printf("DIV\n"); }
+    |
+    evaluate_expression MOD evaluate_expression             { printf("MOD\n"); }
+    |
+    evaluate_expression INC                                 { printf("INC\n"); }
+    |
+    evaluate_expression DEC                                 { printf("DEC\n"); }
+    |
+    '(' evaluate_expression ')'                             {;}
+    |
+    FLOAT_CONST                                             {;}
+    |
+    INT_CONST                                               {;}                        
+    |
+    CHAR_CONST                                              {;}
+    |
+    ID                                                      {;}
+    |
+    TRUE                                                    {;}
+    |
+    FALSE                                                   {;}
+    ;
+
+math_or_value :
+    evaluate_expression                 {;}
+    |
+    STRING_CONST                        {;}
+    ;
+
+condition :
+    expression OR expression                    { printf("OR\n"); }
+    | 
+    expression AND expression                   { printf("AND\n"); }
+    | 
+    NOT expression                              { printf("NOT\n"); }
+    | 
+    math_or_value EQ math_or_value              { printf("EQ\n"); }
+    | 
+    math_or_value NEQ math_or_value             { printf("NEQ\n"); }
+    | 
+    math_or_value LT math_or_value              { printf("LT\n"); }
+    | 
+    math_or_value GT math_or_value              { printf("GT\n"); }
+    | 
+    math_or_value LTE math_or_value             { printf("LTE\n"); }
+    | 
+    math_or_value GTE math_or_value             { printf("GTE\n"); }
+    | 
+    '(' condition ')'                           {;}
+    ;
+
+unary_expression:
+    ID INC      {;}
+    |
+    ID DEC      {;}
+    ;
+
+expression :
+    math_or_value                                    {;}
+    |
+    condition                                        {;}
     ;
 
 
 literal :
-    ID                          {$$ = symbTable.setUsed(symbTable.findSymbol(string($1)));}
+    ID                          {;}
     |
-    INT_CONST                   {$$ = new symbol($1, symbolType::INTtype, 1,1);}
+    INT_CONST                   {;}
     |
-    FLOAT_CONST                 {$$ = new symbol($1, symbolType::FLOATtype, 1,1);}
+    FLOAT_CONST                 {;}
     |
-    CHAR_CONST                  {$$ = new symbol($1, symbolType::INTtype, 1,1);}
+    CHAR_CONST                  {;}
     |
-    STRING_CONST                {$$ = new symbol($1, symbolType::STRINGtype, 1,1);}
+    STRING_CONST                {;}
     |
-    TRUE                        {$$ = new symbol("true", symbolType::BOOLtype,1,1);}
+    TRUE                        {;}
     |
-    FALSE                       {$$ = new symbol("false", symbolType::BOOLtype,1,1);}
+    FALSE                       {;}
     ;
-
 %%
 
 
 /* Error handling */
-void yyerror(const char *msg){
-    extern int yylineno;
-    fprintf(stderr, "Error: %s at line %d\n", msg, yylineno);
-    fprintf(stdout, "\nError: %s at line %d\n", msg, yylineno);
-    exit(1);
+void yyerror(char *msg){
+  fprintf(stderr, "%s\n", msg);
+  exit(1);
 }
-
-void yywarn(const char *msg){
-    fprintf(stderr, "Warning: %s\n", msg);
-    fprintf(stdout, "\nWarning: %s\n", msg);
-}
-
 
 int main(int argc, char *argv[]){
-
-    printf("starting...\n");
 
     extern FILE* yyin;
     char* filename = argv[1];
@@ -224,9 +388,6 @@ int main(int argc, char *argv[]){
     yyin = file;
 
     yyparse();
-    symbTable.printSymbolTable(symbolTable::current);
-    symbolTable::cleanUp();
-    cout << "cleanup done" << endl;
 
     return 0;
 }

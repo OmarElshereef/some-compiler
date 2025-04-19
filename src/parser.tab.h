@@ -39,7 +39,59 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     INTEGER = 258
+     IF = 258,
+     ELSE = 259,
+     WHILE = 260,
+     FOR = 261,
+     DO = 262,
+     SWITCH = 263,
+     CASE = 264,
+     DEFAULT = 265,
+     BREAK = 266,
+     CONTINUE = 267,
+     RETURN = 268,
+     CONST = 269,
+     INT = 270,
+     FLOAT = 271,
+     DOUBLE = 272,
+     CHAR = 273,
+     STRING = 274,
+     BOOL = 275,
+     VOID = 276,
+     TRUE = 277,
+     FALSE = 278,
+     PLUS = 279,
+     MINUS = 280,
+     MUL = 281,
+     DIV = 282,
+     MOD = 283,
+     INC = 284,
+     DEC = 285,
+     ASSIGN = 286,
+     ADD_ASSIGN = 287,
+     SUB_ASSIGN = 288,
+     MUL_ASSIGN = 289,
+     DIV_ASSIGN = 290,
+     MOD_ASSIGN = 291,
+     EQ = 292,
+     NEQ = 293,
+     LT = 294,
+     GT = 295,
+     LTE = 296,
+     GTE = 297,
+     AND = 298,
+     OR = 299,
+     NOT = 300,
+     BIT_AND = 301,
+     BIT_OR = 302,
+     BIT_XOR = 303,
+     COMMENT = 304,
+     FUNC = 305,
+     ID = 306,
+     INT_CONST = 307,
+     FLOAT_CONST = 308,
+     STRING_CONST = 309,
+     CHAR_CONST = 310
    };
 #endif
 
@@ -50,17 +102,18 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 11 "parser.y"
+#line 14 "parser.y"
 
-    int i; // integer value
-    char *s; // string value
-    float f; // float value
-    char c; // char value
+    char cval;
+    char *sval;
+    int ival;
+    float fval;
+    char *id;
 
 
 
 /* Line 1676 of yacc.c  */
-#line 64 "parser.tab.h"
+#line 117 "parser.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

@@ -70,7 +70,6 @@ ID	[a-zA-z][a-zA-z0-9_]*
 "int"           { return INT; }
 "float"         { return FLOAT; }
 "char"          { return CHAR; }
-"double"        { return DOUBLE; }
 "void"          { return VOID; }
 "const"         { return CONST; }
 "string"        {return STRING;}
