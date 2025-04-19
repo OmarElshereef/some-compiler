@@ -24,10 +24,6 @@ ID	[a-zA-z][a-zA-z0-9_]*
 "++"            {return INC;}
 "--"            {return DEC;}
 
-'&'             { return AND; }
-'|'             { return OR; }
-'^'             { return XOR; }
-
 /* assignment operators */
 '='             { return ASSIGN; }
 '+=             { return ADD_ASSIGN; }
