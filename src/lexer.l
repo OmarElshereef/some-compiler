@@ -11,7 +11,7 @@
 %option yylineno
 /* defines */
 
-ID	[a-zA-z][a-zA-z0-9_]*
+ID	[a-zA-Z][a-zA-z0-9_]*
 
 %%
 [ \t\n]+        { /* Ignore whitespace */ }
@@ -88,17 +88,18 @@ ID	[a-zA-z][a-zA-z0-9_]*
 
 
 /* constants */
-(0|[1-9][0-9]*)\.[0-9]+[lL][lL]     {yylval.sval = strdup(yytext); return LLINT_CONST;}
-(0|[1-9][0-9]*)\.[0-9]+[lL]     {yylval.sval = strdup(yytext); return LINT_CONST;}
+(0|[1-9][0-9]*)[lL][lL]     {yylval.sval = strdup(yytext); return LLINT_CONST;}
+(0|[1-9][0-9]*)[lL]     {yylval.sval = strdup(yytext); return LINT_CONST;}
 (0|[1-9][0-9]*)             {yylval.sval = strdup(yytext); return INT_CONST;}
 (0|[1-9][0-9]*)\.[0-9]+[fF]     {yylval.sval = strdup(yytext); return FLOAT_CONST;}
 (0|[1-9][0-9]*)\.[0-9]+        {yylval.sval = strdup(yytext); return DOUBLE_CONST;}
 
 /* strings */
-(\"[^"]*\")                 {yylval.sval = strdup(yytext); return STRING_CONST;}
+(\"([^\\\"]|\\.)*\") { yylval.sval = strdup(yytext); return STRING_CONST; }
+
 
 /* characters */
-(\'[^\']\')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
+(\'([^\\']|\\.)\')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
 
 /* comments */
 (\/\/.*)                    ;
