@@ -11,7 +11,7 @@
 %option yylineno
 /* defines */
 
-ID	[a-zA-z][a-zA-z0-9_]*
+ID	[a-zA-Z][a-zA-z0-9_]*
 
 %%
 [ \t\n]+        {;}
@@ -88,10 +88,10 @@ ID	[a-zA-z][a-zA-z0-9_]*
 (0|[1-9][0-9]*)\.[0-9]+     {yylval.sval = strdup(yytext); return FLOAT_CONST;}
 
     /* strings */
-(\"[^"]*\")                 {yylval.sval = strdup(yytext); return STRING_CONST;}
+(\"([^\\"]|\\.)*\" )                 {yylval.sval = strdup(yytext); return STRING_CONST;}
 
     /* characters */
-(\'[^\']\')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
+(\'([^\\']|\\.)\')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
 
     /* comments */
 (\/\/.*)                    ;
