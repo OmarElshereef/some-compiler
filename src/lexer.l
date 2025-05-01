@@ -69,6 +69,7 @@ ID	[a-zA-Z][a-zA-z0-9_]*
     /* data types */
 "int"           { return INT; }
 "float"         { return FLOAT; }
+"double"        { return DOUBLE; }
 "char"          { return CHAR; }
 "void"          { return VOID; }
 "const"         { return CONST; }
