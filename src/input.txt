@@ -10,8 +10,10 @@ void y(int a, int b) {
 
     do {
         z();
-    } while (a( h , k));
-
+    } while (a());
+    if (b)
+        x += 1;
+    
     switch (x) {
         case 1:
             x += 1;
@@ -23,5 +25,4 @@ void y(int a, int b) {
             x++;
             break;
     }
-
 }

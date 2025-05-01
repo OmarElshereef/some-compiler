@@ -19,7 +19,6 @@
     char *id;
 }
 
-%nonassoc LOWER_THAN_ELSE
 
 /* Keywords */
 %token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE RETURN FUNC
@@ -61,8 +60,7 @@
 %left   MUL DIV MOD
 %right  NOT
 %left   INC DEC
-%left   FUNC
-
+%left   '(' ')'
 /* Other tokens */
 %token <id> ID
 %token <ival> INT_CONST
@@ -73,6 +71,8 @@
 
 %type <sval> type function_declaration_prototype
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 
 /* Grammar */
 %%
@@ -83,6 +83,23 @@ program :
         ;
 
 statement :
+        matched_statement  {;}
+        | 
+        unmatched_statement {;}
+        ;
+
+matched_statement :
+        IF '(' expression ')' matched_statement ELSE matched_statement {printf("matched if end\n");} 
+        | other_stmt {;}
+        ;
+
+unmatched_statement :
+        IF '(' expression ')' statement %prec LOWER_THAN_ELSE  {printf("unmatched if end\n");} 
+        |
+        IF '(' expression ')' matched_statement ELSE unmatched_statement {printf("unmatched if end\n");} 
+        ;
+
+other_stmt :
         declaration ';'             { printf("Declaration\n"); }
         | 
         initialization ';'        { printf("Initialization\n"); }
@@ -90,8 +107,6 @@ statement :
         assignment ';'            { printf("Assignment\n"); }
         | 
         unary_expression ';'      { printf("Unary Expression\n"); }
-        | 
-        { printf("If statement start\n"); }   if_statement              { printf("If statement end\n"); }
         | 
         { printf("Switch case start\n"); }    switch_statement          { printf("Switch case end\n"); }
         | 
@@ -111,6 +126,7 @@ statement :
         | 
         { printf("Scope start\n"); }          '{' program '}'           { printf("Scope end\n"); }
         ;
+
 
 do_loop :
         DO '{' program '}' WHILE '(' expression ')'      {;}
@@ -146,11 +162,8 @@ while_loop :
     WHILE '(' expression ')' statement     {;}
     ;
 
-if_statement :
-    IF '(' expression ')' statement     %prec LOWER_THAN_ELSE  {;}
-    |
-    IF '(' expression ')' statement ELSE statement           {;}
-    ;
+
+
 
 switch_statement :
     SWITCH '(' ID ')' '{' switch_program '}'
