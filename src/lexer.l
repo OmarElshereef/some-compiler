@@ -65,6 +65,7 @@ ID	[a-zA-Z][a-zA-z0-9_]*
 "default"       { return DEFAULT; }
 "break"         {return BREAK;}
 "continue"      {return CONTINUE;}
+"function"      {return FUNC;}
 
     /* data types */
 "int"           { return INT; }

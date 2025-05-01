@@ -19,11 +19,13 @@
     char *id;
 }
 
+%nonassoc LOWER_THAN_ELSE
+
 /* Keywords */
-%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE RETURN
+%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE RETURN FUNC
 
 /* Data types */
-%token CONST INT FLOAT DOUBLE CHAR STRING BOOL VOID
+%token CONST VOID INT LINT LLINT FLOAT DOUBLE CHAR STRING BOOL 
 
 /* Boolean values */
 %token TRUE FALSE
@@ -59,7 +61,7 @@
 %left   MUL DIV MOD
 %right  NOT
 %left   INC DEC
-%left FUNC
+%left   FUNC
 
 /* Other tokens */
 %token <id> ID
@@ -67,6 +69,7 @@
 %token <fval> FLOAT_CONST
 %token <sval> STRING_CONST
 %token <cval> CHAR_CONST
+%token <sval> LLINT_CONST LINT_CONST DOUBLE_CONST
 
 %type <sval> type function_declaration_prototype
 
@@ -98,7 +101,7 @@ statement :
         | 
         { printf("For loop start\n"); }       for_loop                  { printf("For loop end\n"); }
         | 
-        function_definition       { printf("Function_definition\n"); }
+        { printf("Function_definition start\n"); }  function_definition       { printf("Function_definition end\n"); }
         | 
         function_call ';'         { printf("Function_call\n"); }
         | 
@@ -114,7 +117,7 @@ do_loop :
         ;
 
 for_loop :
-        FOR '(' for_loop_initialization ';' for_loop_condition ';' for_loop_increment ')' '{' program '}' {;}
+        FOR '(' for_loop_initialization ';' for_loop_condition ';' for_loop_increment ')' statement {;}
         ;
 
 for_loop_initialization :
@@ -140,13 +143,13 @@ for_loop_increment :
     ;
 
 while_loop :
-    WHILE '(' expression ')' '{' program '}'     {;}
+    WHILE '(' expression ')' statement     {;}
     ;
 
 if_statement :
-    IF '(' expression ')' '{' program '}'                                {;}
+    IF '(' expression ')' statement     %prec LOWER_THAN_ELSE  {;}
     |
-    IF '(' expression ')' '{' program '}' ELSE '{' program '}'           {;}
+    IF '(' expression ')' statement ELSE statement           {;}
     ;
 
 switch_statement :
@@ -211,10 +214,6 @@ return_statement :
 
 function_call : 
     ID '(' function_arguments_optional ')'                      %prec FUNC{;}
-    |
-    assignment '(' function_arguments_optional ')'            %prec FUNC{;}
-    |
-    initialization '(' function_arguments_optional ')'       %prec FUNC{;}
     ;
 
 function_arguments_optional :
@@ -268,6 +267,12 @@ type :
     |
     FLOAT       { ; }
     |
+    DOUBLE      { ; }
+    |
+    LINT        { ; }
+    |
+    LLINT       { ; }
+    |
     CHAR        { ; }
     |
     STRING      { ; }
@@ -309,6 +314,8 @@ evaluate_expression :
     TRUE                                                    {;}
     |
     FALSE                                                   {;}
+    | 
+    function_call                                           {;}
     ;
 
 math_or_value :
