@@ -12,7 +12,7 @@
 %option yylineno
     /* defines */
 
-ID	[a-zA-Z][a-zA-z0-9_]*
+ID	[a-zA-Z][a-zA-Z0-9_]*
 
 %%
     /* Ignore whitespace */
@@ -96,15 +96,15 @@ ID	[a-zA-Z][a-zA-z0-9_]*
 (0|[1-9][0-9]*)\.[0-9]+        {yylval.sval = strdup(yytext); return DOUBLE_CONST;}
 
     /* strings */
-(\"([^\\\"]|\\.)*\") { yylval.sval = strdup(yytext); return STRING_CONST; }
+(\"([^\\\"\n]|\\.)*\") { yylval.sval = strdup(yytext); return STRING_CONST; }
 
 
     /* characters */
-(\'([^\\']|\\.)\')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
+('(\\[abfnrtv\\'"]|[^\\'\n])')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
 
     /* comments */
 (\/\/.*)                    ;
-(\/\*(.|\n|\r)*\*\/)        ;
+("/*"([^*]|\*+[^*/])*"*"+"/" )        ;
 
     /* parentheses */
 [(){}\[\]]                {return yytext[0];}
