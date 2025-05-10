@@ -1,21 +1,23 @@
-/* Definitions */
+    /* Definitions */
 
 %{
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
+    #include "utils/symbolTable.hpp"
     #include "./parser.tab.h"
 
 %}
 
 %option yylineno
-/* defines */
+    /* defines */
 
 ID	[a-zA-Z][a-zA-z0-9_]*
 
 %%
-[ \t\n]+        { /* Ignore whitespace */ }
-/* mathematical operators */
+    /* Ignore whitespace */
+[ \t\n]+        { ; }
+    /* mathematical operators */
 "+"             { return PLUS; }
 "-"             { return MINUS; }
 "*"             { return MUL; }
@@ -24,7 +26,7 @@ ID	[a-zA-Z][a-zA-z0-9_]*
 "++"            {return INC;}
 "--"            {return DEC;}
 
-/* assignment operators */
+    /* assignment operators */
 "=""             { return ASSIGN; }
 "+="             { return ADD_ASSIGN; }
 "-="            { return SUB_ASSIGN; }
@@ -32,7 +34,7 @@ ID	[a-zA-Z][a-zA-z0-9_]*
 "/="            { return DIV_ASSIGN; }
 "%="            {return MOD_ASSIGN;}
 
-/* relational operators */
+    /* relational operators */
 "=="            { return EQ; }
 "!="            { return NEQ; }
 "<"            { return LT; }
@@ -40,20 +42,20 @@ ID	[a-zA-Z][a-zA-z0-9_]*
 "<="            { return LTE; }
 ">="            { return GTE; }
 
-/* logical operators */
+    /* logical operators */
 "!"             { return NOT; }
 "&&"            { return AND; }
 "||"            { return OR; }
 
-/* bitwise operators */
+    /* bitwise operators */
 "&"             {return BIT_AND;}
 "|"             {return BIT_OR;}
 "^"             {return BIT_XOR;}
 
-/* semicolon and comma */
+    /* semicolon and comma */
 [;:,]       {return yytext[0];}
 
-/* keywords */
+    /* keywords */
 "if"            { return IF; }
 "else"          { return ELSE; }
 "while"         { return WHILE; }
@@ -65,9 +67,8 @@ ID	[a-zA-Z][a-zA-z0-9_]*
 "default"       { return DEFAULT; }
 "break"         { return BREAK; }
 "continue"      { return CONTINUE; }
-"function"      { return FUNC; }
 
-/* data types */
+    /* data types */
 "int"           { return INT; }
 "lint"          { return LINT; }
 "llint"         { return LLINT; }
@@ -79,35 +80,39 @@ ID	[a-zA-Z][a-zA-z0-9_]*
 "string"        {return STRING;}
 "bool"          {return BOOL;}
 
-/* boolean values */
+    /* boolean values */
 "true"          {return TRUE;}
 "false"         {return FALSE;}
 
-/* identifiers */
+    /* identifiers */
 {ID}        {yylval.sval = strdup(yytext); return ID;}
 
 
-/* constants */
+    /* constants */
 (0|[1-9][0-9]*)[lL][lL]     {yylval.sval = strdup(yytext); return LLINT_CONST;}
 (0|[1-9][0-9]*)[lL]     {yylval.sval = strdup(yytext); return LINT_CONST;}
 (0|[1-9][0-9]*)             {yylval.sval = strdup(yytext); return INT_CONST;}
 (0|[1-9][0-9]*)\.[0-9]+[fF]     {yylval.sval = strdup(yytext); return FLOAT_CONST;}
 (0|[1-9][0-9]*)\.[0-9]+        {yylval.sval = strdup(yytext); return DOUBLE_CONST;}
 
-/* strings */
+    /* strings */
 (\"([^\\\"]|\\.)*\") { yylval.sval = strdup(yytext); return STRING_CONST; }
 
 
-/* characters */
+    /* characters */
 (\'([^\\']|\\.)\')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
 
-/* comments */
+    /* comments */
 (\/\/.*)                    ;
 (\/\*(.|\n|\r)*\*\/)        ;
 
-/* parentheses */
+    /* parentheses */
 [(){}\[\]]                {return yytext[0];}
 
-/* error */
+    /* error */
 .                           {printf("Error: Unrecognized token %s\n", yytext); exit(1);}
 %%
+
+int yywrap(void) {
+    return 1;
+}

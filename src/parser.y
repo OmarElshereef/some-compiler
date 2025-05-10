@@ -4,14 +4,23 @@
     #include <stdlib.h>
     #include <cstring>
     #include "utils/symbolTable.hpp"
+    #include "utils/quadHandler.hpp"
 
     symbolTable symbTable = symbolTable();
+    QuadHandler quadHandle = QuadHandler("output/quad.txt");
     int symbolTable::numScopes = 0;
     vector<vector<symbolTable*>> symbolTable::symbolTableAdj = vector<vector<symbolTable*>>(1,vector<symbolTable*>());
     symbolTable* symbolTable::current = &symbTable;
+    map<string, vector<symbol*>> functionParameters;
+    vector<symbol*> currentFunctionParameters;
+    vector<symbol*> functionCallParameters;
+    symbolType currFunctionReturn = symbolType::UNKNOWN;
+    string currSwitchLabel = "";
+    symbol* currSwitchVar = NULL;
 
-    void yyerror(const char *s);
-    int yylex(void);
+    int yylex();
+
+    int inFunction = 0;
     %}
 
 %union {
@@ -22,7 +31,7 @@
 }
 
 /* Keywords */
-%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE FUNC RETURN
+%token IF ELSE WHILE FOR DO SWITCH CASE DEFAULT BREAK CONTINUE RETURN
 
 /* Data types */
 %token CONST INT FLOAT CHAR DOUBLE VOID STRING BOOL LINT LLINT
@@ -45,6 +54,9 @@
 /* Bitwise operators */
 %token BIT_AND BIT_OR BIT_XOR
 
+/* COMMENT tokens */
+%token COMMENT
+
 /* Associativity: https://en.cppreference.com/w/cpp/language/operator_precedence */
 %right  ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN
 %left   OR
@@ -66,7 +78,7 @@
 %token <sval> STRING_CONST CHAR_CONST
 
 %type <sval> function_declaration_prototype
-%type <sval> if_statement one_level_if_statement
+%type <sval> one_level_if_statement
 %type <symboll> for_loop_condition
 %type <symboll> evaluate_expression 
 %type <symboll> math_or_value
@@ -116,12 +128,82 @@ statement :
         { printf("Scope start\n"); }          '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
         ;
 
+function_definition :
+    function_declaration_prototype {if(inFunction) yyerror("You cannot declare a function inside a function."); inFunction = 1;} '{' program return_statement ';' '}' { 
+        inFunction = 0; 
+        symbTable.changeScope(0); 
+        functionParameters[$<sval>1] = currentFunctionParameters;
+        currentFunctionParameters.clear();
+        currFunctionReturn = symbolType::UNKNOWN;
+        }
+    ;
+
+function_declaration_prototype : //gives  warning: type clash on default action: error
+    VOID ID {symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2),symbolType::VOIDtype,NULL,0,1)); symbTable.changeScope(1); currFunctionReturn = symbolType::VOIDtype;} '(' function_parameters_optional ')' {quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); $$=$2;}  // isInitialized = 1 because it is a function
+    |
+    type ID {symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2),$1,NULL,0,1)); symbTable.changeScope(1); currFunctionReturn = $1;} '(' function_parameters_optional ')' {quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); $$=$2;}  // isInitialized = 1 because it is a function
+    ;
+
+function_parameters_optional :
+    function_parameters             {;}
+    |
+                                    {;}
+    ;
+
+function_parameters :
+    function_parameters ',' function_parameter      {;}
+    |
+    function_parameter                              {;}
+    ;
+
+function_parameter:
+    type ID             {symbol* s = symbTable.addOrUpdateSymbol(string($2),$1,NULL,0,1); currentFunctionParameters.push_back(s);} // isInitialized = 1 because it is a function
+    ;
+
+return_statement :
+    RETURN expression   {quadHandle.return_op($2, currFunctionReturn);}
+    |
+    RETURN              {quadHandle.return_op(NULL, currFunctionReturn);}
+    ;
+
+function_call : 
+    ID '(' function_arguments_optional ')' 
+    {
+        symbol* temp = symbTable.findSymbol(string($1));
+        if(!functionParameters.count(string(temp->name))) yyerror("There is not a function with this name.");
+        vector<symbol*> params = functionParameters[string(temp->name)];
+        if(params.size() != functionCallParameters.size()) yyerror("Number of parameters does not match.");
+        for(int i = 0; i < params.size(); i++)
+        {
+            if(!quadHandle.tryCast(functionCallParameters[i],params[i]->type)) yyerror("Parameter types do not match.");
+        }
+        symbol* ret = quadHandle.call_func_op(temp, functionCallParameters);
+        functionCallParameters.clear();
+        $$ = ret;
+    };
+    
+function_arguments_optional :
+    function_arguments      {;}
+    |
+                            {;}
+    ;
+
+function_arguments :
+    function_arguments ',' function_argument    {;}
+    |
+    function_argument                           {;}
+    ;
+
+function_argument :
+    literal            {functionCallParameters.push_back($1);}
+    ;
+
 do_loop :
-        DO {symbTable.changeScope(1);} 
+        DO {symbTable.changeScope(1); string label = quadHandle.generateLabel(); quadHandle.writeToFile(label+":"); $<sval>$ = strdup(label.data());} 
            '{' program '}' 
            WHILE 
            {symbTable.changeScope(0);} 
-           '(' expression ')'      {;}
+           '(' expression ')'      {quadHandle.jump_cond_op($9, $<sval>2, true);}
         ;
 
 for_loop :
