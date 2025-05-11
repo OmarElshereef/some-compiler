@@ -27,7 +27,7 @@ ID	[a-zA-Z][a-zA-Z0-9_]*
 "--"            {return DEC;}
 
     /* assignment operators */
-"=""             { return ASSIGN; }
+"="             { return ASSIGN; }
 "+="             { return ADD_ASSIGN; }
 "-="            { return SUB_ASSIGN; }
 "*="            { return MUL_ASSIGN; }
@@ -102,9 +102,9 @@ ID	[a-zA-Z][a-zA-Z0-9_]*
     /* characters */
 ('(\\[abfnrtv\\'"]|[^\\'\n])')                 {yylval.sval = strdup(yytext); return CHAR_CONST;}
 
-    /* comments */
-(\/\/.*)                    ;
-("/*"([^*]|\*+[^*/])*"*"+"/" )        ;
+"//".*                      { /* ignore single-line comments */ }
+
+"/*"([^*]|\*+[^*/])*\*+"/"  { /* ignore multi-line comments */ }
 
     /* parentheses */
 [(){}\[\]]                {return yytext[0];}
