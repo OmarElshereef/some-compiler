@@ -80,8 +80,16 @@ public:
             }
             else
             {
-                value = bool(value);
-                this->bval = value;
+                int x;
+                x = stoi(value);
+                if (x != 0)
+                {
+                    this->bval = true;
+                }
+                else
+                {
+                    this->bval = false;
+                }
             }
             break;
         case FLOATtype:
