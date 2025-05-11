@@ -80,18 +80,18 @@
 %type <sval> function_declaration_prototype
 %type <sval> one_level_if_statement
 %type <symboll> for_loop_condition
-%type <symboll> evaluate_expression 
+//%type <symboll> evaluate_expression 
 %type <symboll> math_or_value
 %type <symboll> expression 
 %type <symboll> condition 
 %type <symboll> unary_expression
 %type <symboll> literal
 %type <symboll> assignment
-%type <symboll> initialization
+//%type <symboll> initialization
 %type <symboll> function_call
 %type <sval> integer_value numeric_value
 %type <symbolTypeType> type integer_type numeric_type
-%type <operationName> assign
+//%type <operationName> assign
 
 
 /* Grammar */
@@ -104,8 +104,6 @@ program :
 
 statement :
         declaration ';'           { printf("Declaration\n"); }
-        | 
-        initialization ';'        { printf("Initialization\n"); }
         | 
         assignment ';'            { printf("Assignment\n"); }
         | 
@@ -127,6 +125,41 @@ statement :
         |
         { printf("Scope start\n"); }          '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
         ;
+
+declaration
+    : type ID decl_tail                                 {;}
+    | CONST type ID const_decl_tail                     {;} 
+    ;
+
+decl_tail
+    : ';'
+        {
+            symbol* sym = symbolTable::current->addSymbol(yyvsp[-2].sval, yyvsp[-3].symbolTypeType, false, false);
+            if (!sym) YYABORT;
+        }
+    | ASSIGN expression ';'
+        {
+            symbol* sym = symbolTable::current->addSymbol(yyvsp[-4].sval, yyvsp[-5].symbolTypeType, false, true);
+            if (!sym) YYABORT;
+
+            quadHandle.assign_op(operation::Assign, sym->name, yyvsp[-2].sym);
+        }
+    ;
+
+const_decl_tail
+    : ';'
+        {
+            yyerror("Constant must be initialized at declaration.");
+            YYABORT;
+        }
+    | ASSIGN expression ';'
+        {
+            symbol* sym = symbolTable::current->addSymbol(yyvsp[-4].sval, yyvsp[-5].symbolTypeType, true, true);
+            if (!sym) YYABORT;
+
+            quadHandle.assign_op(operation::Assign, sym->name, yyvsp[-2].sym);
+        }
+    ;
 
 function_definition :
     function_declaration_prototype {if(inFunction) yyerror("You cannot declare a function inside a function."); inFunction = 1;} '{' program return_statement ';' '}' { 
@@ -306,6 +339,9 @@ condition :
     condition OR condition {$$ = new symbol($1->value || $3->value, symbolType::BOOLtype, 1,1);}
     ;
 
+
+
+
 math_or_value : 
     math_or_value PLUS math_or_value {$$ = new symbol($1->value + $3->value, $1->type, 1,1);}
     |
@@ -342,8 +378,22 @@ math_or_value :
     numeric_value {$$ = $1;}
     ;
 
+unary_expression:
+    ID INC      {;}
+    |
+    ID DEC      {;}
+    ;
+
+
 assignment :
-    type ID ASSIGN expression { symbTable.addOrUpdateSymbol(string($2), $1, $4, 0, 1); }
+    ID ASSIGN expression {
+        symbol* sym = symbTable.updateSymbol($1);
+        if (!sym) {
+            yyerror("Variable not declared or constant.");
+        } else {
+            quadHandle.assign_op(operation::Assign, sym->name, $3);
+        }
+    }
     ;
 
 literal :

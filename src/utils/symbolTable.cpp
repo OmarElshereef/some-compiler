@@ -1,58 +1,71 @@
 #include "symbolTable.hpp"
 #include <vector>
 
-
-symbolTable::symbolTable() {
+symbolTable::symbolTable()
+{
     this->scope = 0;
 }
 
 // direction = true means enter a new scope downward, false means leave the current scope and go to the parent scope
-void symbolTable::changeScope(bool direction) {
-    if (direction == 1) {
-        symbolTable* newTable = new symbolTable();
+void symbolTable::changeScope(bool direction)
+{
+    if (direction == 1)
+    {
+        symbolTable *newTable = new symbolTable();
         newTable->parent = current;
         symbolTableAdj[current->scope].push_back(newTable);
         current = newTable;
-        symbolTableAdj.push_back(vector<symbolTable*>());
+        symbolTableAdj.push_back(vector<symbolTable *>());
         numScopes++;
         newTable->scope = numScopes;
-    } else {
+    }
+    else
+    {
         current = current->parent;
     }
-    cout<< "Entered new scope: " << current->scope << endl;
+    cout << "Entered new scope: " << current->scope << endl;
 }
 
 /*
 type: declaration type of the symbol
 value: value of the symbol to be updated
 */
-symbol* symbolTable::addOrUpdateSymbol(string name, symbolType type, symbol* value, bool isConst, bool isInitialization) {
+symbol *symbolTable::addOrUpdateSymbol(string name, symbolType type, symbol *value, bool isConst, bool isInitialization)
+{
     symbolTable *root = current;
     bool firstIteration = true;
-    while (root != NULL) {
+    while (root != NULL)
+    {
         auto foundSymbol = root->symbols.find(name);
-        if(foundSymbol != root->symbols.end()) {
+        if (foundSymbol != root->symbols.end())
+        {
             // if it is a declaration
-            if(type != UNKNOWN) {
-                if(firstIteration) {
+            if (type != UNKNOWN)
+            {
+                if (firstIteration)
+                {
                     string error = "Symbol " + name + " already exists in this scope.";
                     yyerror(error.c_str());
                     return NULL;
-                } 
-                else {
-                    symbol* newSymbol =  new symbol(name, type, isConst, isInitialization);
+                }
+                else
+                {
+                    symbol *newSymbol = new symbol(name, type, isConst, isInitialization);
                     current->symbols.insert({name, newSymbol});
                     return current->symbols[name];
                 }
             }
             // if it is a reference
-            else {
-                if(foundSymbol->second->isConst) {
+            else
+            {
+                if (foundSymbol->second->isConst)
+                {
                     string error = "Symbol " + name + " is a constant, you can't update it.";
                     yyerror(error.c_str());
                     return NULL;
                 }
-                else {
+                else
+                {
                     foundSymbol->second->isInitializated = isInitialization;
                     return foundSymbol->second;
                 }
@@ -61,37 +74,85 @@ symbol* symbolTable::addOrUpdateSymbol(string name, symbolType type, symbol* val
 
         root = root->parent;
         firstIteration = false;
-    } 
+    }
     delete root;
 
     // if the symbol is not found in any of the parent scopes, new symbol
-    if(type == UNKNOWN) {
+    if (type == UNKNOWN)
+    {
         string error = "Symbol " + name + " must be declared first.";
         yyerror(error.c_str());
         return NULL;
     }
-    else {
-        symbol* newSymbol =  new symbol(name, type, isConst, isInitialization);
+    else
+    {
+        symbol *newSymbol = new symbol(name, type, isConst, isInitialization);
         current->symbols.insert({name, newSymbol});
         return current->symbols[name];
     }
-    
 }
 
-symbol* symbolTable::setUsed(symbol* sym) {
+symbol *symbolTable::addSymbol(string name, symbolType type, bool isConst, bool isInitialization)
+{
+    if (isConst && !isInitialization)
+    {
+        yyerror(("Constant " + name + " must be initialized at declaration.").c_str());
+        return nullptr;
+    }
+    if (current->symbols.find(name) != current->symbols.end())
+    {
+        yyerror(("Symbol " + name + " already exists in this scope.").c_str());
+        return nullptr;
+    }
+
+    symbol *newSym = new symbol(name, type, isConst, isInitialization);
+    current->symbols.insert({name, newSym});
+    return newSym;
+}
+
+symbol *symbolTable::updateSymbol(string name)
+{
+    symbolTable *scope = current;
+    while (scope)
+    {
+        auto it = scope->symbols.find(name);
+        if (it != scope->symbols.end())
+        {
+            symbol *sym = it->second;
+            if (sym->isConst)
+            {
+                yyerror(("Symbol " + name + " is a constant and cannot be updated.").c_str());
+                return nullptr;
+            }
+            return sym;
+        }
+        scope = scope->parent;
+    }
+
+    yyerror(("Symbol " + name + " must be declared before use.").c_str());
+    return nullptr;
+}
+
+symbol *symbolTable::setUsed(symbol *sym)
+{
     sym->isUsed = true;
     return sym;
 }
 
-symbol* symbolTable::findSymbol(string name) {
+symbol *symbolTable::findSymbol(string name)
+{
     symbolTable *root = current;
-    while (root != NULL) {
+    while (root != NULL)
+    {
         auto foundSymbol = root->symbols.find(name);
-        if(foundSymbol != root->symbols.end()) {
-            if(foundSymbol->second->isInitializated == true) {
+        if (foundSymbol != root->symbols.end())
+        {
+            if (foundSymbol->second->isInitializated == true)
+            {
                 return foundSymbol->second;
             }
-            else {
+            else
+            {
                 string error = "Symbol " + name + " is not initialized.";
                 yyerror(error.c_str());
                 return NULL;
@@ -104,30 +165,40 @@ symbol* symbolTable::findSymbol(string name) {
     return NULL;
 }
 
-void symbolTable::printSymbolTable(symbolTable* root) {
+void symbolTable::printSymbolTable(symbolTable *root)
+{
     cout << "\n---------------\n\nScope " << root->scope << ":" << endl;
-    for(auto it2 = root->symbols.begin(); it2 != root->symbols.end(); it2++) {
-            if(it2->second->isConst) cout<<"const ";
-            cout<<symbolTypeName[it2->second->type] << " " << it2->second->name << endl;
-            if(it2->second->isUsed == false) {
-                string error = "Symbol ** " +it2->second->name+ " ** is declared but not used.";
-                yywarn(error.c_str());
-            }
+    for (auto it2 = root->symbols.begin(); it2 != root->symbols.end(); it2++)
+    {
+        if (it2->second->isConst)
+            cout << "const ";
+        cout << symbolTypeName[it2->second->type] << " " << it2->second->name << endl;
+        if (it2->second->isUsed == false)
+        {
+            string error = "Symbol ** " + it2->second->name + " ** is declared but not used.";
+            yywarn(error.c_str());
+        }
     }
-    cout<<endl<<endl;
-    for(auto it = symbolTableAdj[root->scope].begin(); it != symbolTableAdj[root->scope].end(); it++) {
+    cout << endl
+         << endl;
+    for (auto it = symbolTableAdj[root->scope].begin(); it != symbolTableAdj[root->scope].end(); it++)
+    {
         printSymbolTable(*it);
     }
 }
 
-symbolTable::~symbolTable() {
-    
+symbolTable::~symbolTable()
+{
 }
 
-void symbolTable::cleanUp() {
-    for(int i = 0; i <= numScopes; i++) {
-        for(auto i : symbolTableAdj[i]) {
-            if(i) delete i;
+void symbolTable::cleanUp()
+{
+    for (int i = 0; i <= numScopes; i++)
+    {
+        for (auto i : symbolTableAdj[i])
+        {
+            if (i)
+                delete i;
         }
     }
 }

@@ -186,6 +186,9 @@ public:
 
     struct symbol *addOrUpdateSymbol(string name, symbolType type, symbol *value, bool isConst, bool isInitialization);
 
+    struct symbol *addSymbol(string name, symbolType type, bool isConst, bool isInitialization);
+
+    struct symbol *updateSymbol(string name);
     symbol *setUsed(symbol *sym);
 
     struct symbol *findSymbol(string name);
