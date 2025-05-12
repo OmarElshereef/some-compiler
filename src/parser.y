@@ -371,17 +371,19 @@ assignment :
     ;
 
 literal :
-    ID                          {;}
+    ID                          {$$ = symbTable.setUsed(symbTable.findSymbol(string($1)));}
     |
-    numeric_value               {;}
+    INT_CONST                   {symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
     |
-    CHAR_CONST                  {;}
+    FLOAT_CONST                 {symbol* temp = new symbol($1, symbolType::FLOATtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
     |
-    STRING_CONST                {;}
+    CHAR_CONST                  {symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
     |
-    TRUE                        {;}
+    STRING_CONST                {symbol* temp = new symbol($1, symbolType::STRINGtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
     |
-    FALSE                       {;}
+    TRUE                        {symbol* temp = new symbol("true", symbolType::BOOLtype,1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
+    |
+    FALSE                       {symbol* temp = new symbol("false", symbolType::BOOLtype,1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
     ;
 
 type :
