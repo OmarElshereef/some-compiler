@@ -126,40 +126,34 @@ statement :
         { printf("Scope start\n"); }          '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
         ;
 
+
+// int x = 0;
+
+
 declaration
-    : type ID decl_tail                                 {;}
-    | CONST type ID const_decl_tail                     {;} 
-    ;
-
-decl_tail
-    : ';'
-        {
-            symbol* sym = symbolTable::current->addSymbol(yyvsp[-2].sval, yyvsp[-3].symbolTypeType, false, false);
+    : type ID ';'                                 {
+            symbol* sym = symbolTable::current->addSymbol($2,$1,false, false);
             if (!sym) YYABORT;
-        }
-    | ASSIGN expression ';'
-        {
-            symbol* sym = symbolTable::current->addSymbol(yyvsp[-4].sval, yyvsp[-5].symbolTypeType, false, true);
-            if (!sym) YYABORT;
-
-            quadHandle.assign_op(operation::Assign, sym->name, yyvsp[-2].sym);
         }
     ;
 
-const_decl_tail
-    : ';'
-        {
-            yyerror("Constant must be initialized at declaration.");
-            YYABORT;
-        }
-    | ASSIGN expression ';'
-        {
-            symbol* sym = symbolTable::current->addSymbol(yyvsp[-4].sval, yyvsp[-5].symbolTypeType, true, true);
-            if (!sym) YYABORT;
 
-            quadHandle.assign_op(operation::Assign, sym->name, yyvsp[-2].sym);
+initialization
+    : type ID ASSIGN expression                {
+            symbol* sym = symbolTable::current->addSymbol($2,$1,false, true);
+            if (!sym) YYABORT;
+            quadHandle.assign_op(operation::Assign, sym->name, $4);
         }
+    | CONST type ID ASSIGN expression    {
+            symbol* sym = symbolTable::current->addSymbol($3,$2,true, true);
+            if (!sym) YYABORT;
+            quadHandle.assign_op(operation::Assign, sym->name, $5);
+    }
     ;
+
+
+
+
 
 function_definition :
     function_declaration_prototype {if(inFunction) yyerror("You cannot declare a function inside a function."); inFunction = 1;} '{' program return_statement ';' '}' { 
@@ -249,13 +243,9 @@ for_loop :
         ;
 
 for_loop_initialization :
-    integer_type ID ASSIGN integer_value {
-                                symbTable.addOrUpdateSymbol(string($2), $1, new symbol(string($4), $1, 1, 1), 0, 1);
-                            }
+    integer_type ID ASSIGN integer_value {;}
     |
-    ID ASSIGN integer_value     {
-                                symbTable.addOrUpdateSymbol(string($1), $1, new symbol(string($3), $1, 1,1), 0, 1);
-                            }
+    ID ASSIGN integer_value     {;}
     ;
 
 for_loop_condition :
@@ -343,39 +333,27 @@ condition :
 
 
 math_or_value : 
-    math_or_value PLUS math_or_value {$$ = new symbol($1->value + $3->value, $1->type, 1,1);}
+    math_or_value PLUS math_or_value {;}
     |
-    math_or_value MINUS math_or_value {$$ = new symbol($1->value - $3->value, $1->type, 1,1);}
+    math_or_value MINUS math_or_value {;}
     |
-    math_or_value MUL math_or_value {$$ = new symbol($1->value * $3->value, $1->type, 1,1);}
+    math_or_value MUL math_or_value {;}
     |
-    math_or_value DIV math_or_value {
-            if($3->value == 0){
-                yyerror("Division by zero error");
-            } else {
-                $$ = new symbol($1->value / $3->value, $1->type, 1,1);
-            }
-        }
+    math_or_value DIV math_or_value {;}
     |
-    math_or_value MOD math_or_value {
-        if($3->value == 0){
-                yyerror("Division by zero error");
-        } else {
-            $$ = new symbol($1->value % $3->value, $1->type, 1,1);
-        }
-    }
+    math_or_value MOD math_or_value {;}
     |
-    math_or_value BIT_AND math_or_value {$$ = new symbol($1->value & $3->value, $1->type, 1,1);}
+    math_or_value BIT_AND math_or_value {;}
     |
-    math_or_value BIT_OR math_or_value {$$ = new symbol($1->value | $3->value, $1->type, 1,1);}
+    math_or_value BIT_OR math_or_value {;}
     |
-    math_or_value BIT_XOR math_or_value {$$ = new symbol($1->value ^ $3->value, $1->type, 1,1);}
+    math_or_value BIT_XOR math_or_value {;}
     |
-    '(' math_or_value ')' {$$ = $2;}
+    '(' math_or_value ')' {;}
     |
-    MINUS math_or_value {$$ = new symbol(-$2->value, $2->type, 1,1);}
+    MINUS math_or_value {;}
     |
-    numeric_value {$$ = $1;}
+    numeric_value {;}
     ;
 
 unary_expression:
@@ -386,73 +364,66 @@ unary_expression:
 
 
 assignment :
-    ID ASSIGN expression {
-        symbol* sym = symbTable.updateSymbol($1);
-        if (!sym) {
-            yyerror("Variable not declared or constant.");
-        } else {
-            quadHandle.assign_op(operation::Assign, sym->name, $3);
-        }
-    }
+    ID ASSIGN expression {;}
     ;
 
 literal :
-    ID                          {$$ = symbTable.setUsed(symbTable.findSymbol(string($1)));}
+    ID                          {;}
     |
-    numeric_value               {$$ = new symbol($1, $1->type, 1,1);}
+    numeric_value               {;}
     |
-    CHAR_CONST                  {$$ = new symbol($1, symbolType::CHARtype, 1,1);}
+    CHAR_CONST                  {;}
     |
-    STRING_CONST                {$$ = new symbol($1, symbolType::STRINGtype, 1,1);}
+    STRING_CONST                {;}
     |
-    TRUE                        {$$ = new symbol("true", symbolType::BOOLtype,1,1);}
+    TRUE                        {;}
     |
-    FALSE                       {$$ = new symbol("false", symbolType::BOOLtype,1,1);}
+    FALSE                       {;}
     ;
 
 type : 
-    numeric_type {$$ = $1;}
+    numeric_type {;}
     |
-    CHAR {$$ = symbolType::CHARtype;}
+    CHAR {;}
     |
-    STRING {$$ = symbolType::STRINGtype;}
+    STRING {;}
     |
-    BOOL {$$ = symbolType::BOOLtype;}
+    BOOL {;}
     |
-    VOID {$$ = symbolType::VOIDtype;}
+    VOID {;}
     ;
 
 
 numeric_type :
     integer_type {$$ = $1;}
     |
-    FLOAT {$$ = symbolType::FLOATtype;}
+    FLOAT {;}
     |
-    DOUBLE {$$ = symbolType::DOUBLEtype;}
+    DOUBLE {;}
     ;
 
 integer_type :
-    INT {$$ = symbolType::INTtype;}
+    INT {;}
     |
-    LINT {$$ = symbolType::LINTtype;}
+    LINT {;}
     |
-    LLINT {$$ = symbolType::LLINTtype;}
+    LLINT {;}
     ;
 
 numeric_value :
     integer_value {$$ = $1;}
     |
-    FLOAT_CONST   {$$ = new symbol($1, symbolType::FLOATtype, 1,1);}
+    FLOAT_CONST   {;}
     |
-    DOUBLE_CONST  {$$ = new symbol($1, symbolType::DOUBLEtype, 1,1);}
+    DOUBLE_CONST  {;}
     ;
 
 integer_value :
-    INT_CONST               {$$ = new symbol($1, symbolType::INTtype, 1,1);}
+    INT_CONST               {;}
     |
-    LINT_CONST              {$$ = new symbol($1, symbolType::LINTtype, 1,1);}
+    LINT_CONST              {;}
     |
-    LLINT_CONST             {$$ = new symbol($1, symbolType::LLINTtype, 1,1);}
+    LLINT_CONST             {;}
     ;
 
 %%
