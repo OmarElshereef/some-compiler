@@ -25,29 +25,6 @@ enum symbolType
 };
 const vector<string> symbolTypeName = {"LINT", "LLINT", "DOUBLE", "FLOAT", "INT", "BOOL", "CHAR", "STRING", "CONST", "VOID", "UNKNOWN"};
 
-int typeRank(symbolType type)
-{
-    switch (type)
-    {
-    case CHARtype:
-        return 0;
-    case BOOLtype:
-        return 1;
-    case INTtype:
-        return 2;
-    case FLOATtype:
-        return 3;
-    case DOUBLEtype:
-        return 4;
-    case LLINTtype:
-        return 5;
-    case LINTtype:
-        return 6;
-    default:
-        return -1; // Unknown or unsupported
-    }
-}
-
 class constNode
 {
 public:

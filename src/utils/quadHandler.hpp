@@ -21,6 +21,7 @@ public:
     void bitwiseCast(symbol *arg1, symbol *arg2);
     bool tryCast(symbol *arg1, symbolType type);
     string generateLabel();
+    int typeRank(symbolType type);
 
     symbol *math_op(operation op, symbol *arg1, symbol *arg2);
     symbol *bit_op(operation op, symbol *arg1, symbol *arg2);
