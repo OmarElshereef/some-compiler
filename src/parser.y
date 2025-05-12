@@ -78,7 +78,6 @@
 %token <sval> STRING_CONST CHAR_CONST
 
 %type <sval> function_declaration_prototype
-%type <symboll> for_loop_condition
 //%type <symboll> evaluate_expression 
 %type <symboll> math_or_value
 %type <symboll> expression 
@@ -247,13 +246,13 @@ do_loop :
            '{' program '}' 
            WHILE 
            {symbTable.changeScope(0);} 
-           '(' expression ')'      {quadHandle.jump_cond_op($9, $<sval>2, true);}
+           '(' condition ')'      {quadHandle.jump_cond_op($9, $<sval>2, true);}
         ;
 
 for_loop :
         FOR 
         '(' for_loop_initialization ';' 
-        for_loop_condition ';' 
+        condition ';' 
         for_loop_increment ')' 
         statement 
         ;
@@ -264,9 +263,6 @@ for_loop_initialization :
     ID ASSIGN INT_CONST     {;}
     ;
 
-for_loop_condition :
-    expression            {$$ = $1;}
-    ;
 
 for_loop_increment :
     expression            {;}
@@ -311,25 +307,25 @@ expression :
 condition :
     expression {$$ = $1;}
     |
-    expression EQ expression {$$ = new symbol($1->value == $3->value, symbolType::BOOLtype, 1,1);}
+    expression EQ expression {;}
     |
-    expression NEQ expression {$$ = new symbol($1->value != $3->value, symbolType::BOOLtype, 1,1);}
+    expression NEQ expression {;}
     |
-    expression LT expression {$$ = new symbol($1->value < $3->value, symbolType::BOOLtype, 1,1);}
+    expression LT expression {;}
     |
-    expression GT expression {$$ = new symbol($1->value > $3->value, symbolType::BOOLtype, 1,1);}
+    expression GT expression {;}
     |
-    expression LTE expression {$$ = new symbol($1->value <= $3->value, symbolType::BOOLtype, 1,1);}
+    expression LTE expression {;}
     |
-    expression GTE expression {$$ = new symbol($1->value >= $3->value, symbolType::BOOLtype, 1,1);}
+    expression GTE expression {;}
     |
     '(' condition ')' {$$ = $2;}
     |
-    NOT condition {$$ = new symbol(!$2->value, symbolType::BOOLtype, 1,1);}
+    NOT condition {;}
     |
-    condition AND condition {$$ = new symbol($1->value && $3->value, symbolType::BOOLtype, 1,1);}
+    condition AND condition {;}
     |
-    condition OR condition {$$ = new symbol($1->value || $3->value, symbolType::BOOLtype, 1,1);}
+    condition OR condition {;}
     ;
 
 
