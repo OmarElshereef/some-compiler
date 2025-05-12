@@ -70,7 +70,11 @@
 %left   MUL DIV MOD
 %right  NOT
 %left   INC DEC
-%left   FUNC
+//%left   FUNC
+
+%nonassoc ELSE
+%nonassoc LOWER_THAN_ELSE
+
 
 /* Other tokens */
 %token <sval> ID
@@ -90,7 +94,6 @@
 %type <symbolTypeType> type 
 //%type <operationName> assign
 
-%nonassoc LOWER_THAN_ELSE
 
 
 /* Grammar */
@@ -106,7 +109,7 @@ statement :
         | 
         unmatched_statement {;}
         ;
-
+                
 matched_statement :
         IF '(' expression ')' matched_statement ELSE matched_statement {printf("matched if end\n");} 
         | other_stmt {;}
@@ -321,6 +324,7 @@ condition :
     |
     condition OR condition {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     ;
+
 
 math_or_value : 
     math_or_value PLUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Plus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
