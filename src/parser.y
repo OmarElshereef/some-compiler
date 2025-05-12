@@ -78,7 +78,6 @@
 %token <sval> STRING_CONST CHAR_CONST
 
 %type <sval> function_declaration_prototype
-%type <sval> one_level_if_statement
 %type <symboll> for_loop_condition
 //%type <symboll> evaluate_expression 
 %type <symboll> math_or_value
@@ -92,6 +91,8 @@
 %type <symbolTypeType> type 
 //%type <operationName> assign
 
+%nonassoc LOWER_THAN_ELSE
+
 
 /* Grammar */
 %%
@@ -102,33 +103,47 @@ program :
         ;
 
 statement :
-        declaration ';'           { printf("Declaration\n"); }
+        matched_statement  {;}
+        | 
+        unmatched_statement {;}
+        ;
+
+matched_statement :
+        IF '(' expression ')' matched_statement ELSE matched_statement {printf("matched if end\n");} 
+        | other_stmt {;}
+        ;
+
+unmatched_statement :
+        IF '(' expression ')' statement %prec LOWER_THAN_ELSE  {printf("unmatched if end\n");} 
         |
-        initialization ';'       { printf("Initialization\n"); }
+        IF '(' expression ')' matched_statement ELSE unmatched_statement {printf("unmatched if end\n");} 
+        ;
+
+other_stmt :
+        declaration ';'             { printf("Declaration\n"); }
+        | 
+        initialization ';'        { printf("Initialization\n"); }
         | 
         assignment ';'            { printf("Assignment\n"); }
         | 
         unary_expression ';'      { printf("Unary Expression\n"); }
         | 
-        { printf("If statement start\n"); }   if_statement              { printf("If statement end\n"); }
+        switch_statement          { printf("Switch case end\n"); }
         | 
-        { printf("Switch case start\n"); }    switch_statement          { printf("Switch case end\n"); }
+        do_loop ';'               { printf("Do while loop end\n"); }
         | 
-        { printf("Do while loop start\n"); }  do_loop ';'               { printf("Do while loop end\n"); }
+        while_loop                { printf("While loop end\n"); }
         | 
-        { printf("While loop start\n"); }     while_loop                { printf("While loop end\n"); }
+        for_loop                  { printf("For loop end\n"); }
         | 
-        { printf("For loop start\n"); }       for_loop                  { printf("For loop end\n"); }
-        | 
-        function_definition       { printf("Function_definition\n"); }
+        function_definition       { printf("Function_definition end\n"); }
         | 
         function_call ';'         { printf("Function_call\n"); }
-        |
-        { printf("Scope start\n"); }          '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
+        | 
+        ID ';'                    { printf("ID\n"); }
+        | 
+        '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
         ;
-
-
-// int x = 0;
 
 
 declaration
@@ -236,12 +251,11 @@ do_loop :
         ;
 
 for_loop :
-        FOR {symbTable.changeScope(1);} 
-            '(' for_loop_initialization ';' 
-            for_loop_condition ';' 
-            for_loop_increment ')' 
-            '{' program '}' 
-            {symbTable.changeScope(0);}
+        FOR 
+        '(' for_loop_initialization ';' 
+        for_loop_condition ';' 
+        for_loop_increment ')' 
+        statement 
         ;
 
 for_loop_initialization :
@@ -261,22 +275,9 @@ for_loop_increment :
     ;
 
 while_loop :
-    WHILE {;}  
-    '(' expression ')' {symbTable.changeScope(1);} 
-    '{' program '}'    {symbTable.changeScope(0);}
-    ;
-
-
-if_statement :
-    one_level_if_statement {;}
-    |
-    one_level_if_statement ELSE {symbTable.changeScope(1);} '{' program '}' {symbTable.changeScope(0);}
-    ;
-
-one_level_if_statement :
-    IF '(' expression ')' {symbTable.changeScope(1);} 
-                          '{' program '}'    
-                          {symbTable.changeScope(0);}
+    WHILE 
+    '(' expression ')' 
+    statement    {;}
     ;
 
 switch_statement :
