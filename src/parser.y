@@ -70,7 +70,11 @@
 %left   MUL DIV MOD
 %right  NOT
 %left   INC DEC
-%left   FUNC
+//%left   FUNC
+
+%nonassoc ELSE
+%nonassoc LOWER_THAN_ELSE
+
 
 /* Other tokens */
 %token <sval> ID
@@ -90,7 +94,6 @@
 %type <symbolTypeType> type 
 //%type <operationName> assign
 
-%nonassoc LOWER_THAN_ELSE
 
 
 /* Grammar */
@@ -106,7 +109,7 @@ statement :
         | 
         unmatched_statement {;}
         ;
-
+                
 matched_statement :
         IF '(' expression ')' matched_statement ELSE matched_statement {printf("matched if end\n");} 
         | other_stmt {;}
@@ -293,8 +296,6 @@ switch_case :
     ;
 
 expression :
-    literal {$$ = $1;}
-    |
     math_or_value {$$ = $1;}
     |
     '(' expression ')' {$$ = $2;}
@@ -319,16 +320,12 @@ condition :
     |
     expression GTE expression {;}
     |
-    '(' condition ')' {$$ = $2;}
-    |
     NOT condition {;}
     |
     condition AND condition {;}
     |
     condition OR condition {;}
     ;
-
-
 
 
 math_or_value : 
@@ -347,8 +344,6 @@ math_or_value :
     math_or_value BIT_OR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); $$ = rizz;}
     |
     math_or_value BIT_XOR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); $$ = rizz;}
-    |
-    '(' math_or_value ')' {;}
     |
     MINUS math_or_value {;}
     |
