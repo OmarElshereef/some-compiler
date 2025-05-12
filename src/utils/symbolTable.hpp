@@ -178,6 +178,8 @@ public:
 
     struct symbol *findSymbol(string name);
 
+    struct symbol *findSymbolDeclared(string name);
+    
     void printSymbolTable(symbolTable *table);
 
     static void cleanUp();

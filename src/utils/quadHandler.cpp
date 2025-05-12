@@ -5,8 +5,8 @@ void QuadHandler::writeToFile(operation op, symbol *arg1, symbol *arg2, symbol *
     string op_str = operationToString[op];
     string arg1_name = !arg1 ? "" : arg1->name;
     string arg2_name = !arg2 ? "" : arg2->name;
-    string result_name = !result ? "" : result->name;
-    quad_file << op_str << " " << arg1_name << " " << arg2_name << " " << result_name << endl;
+    string result_name = !result ? "" : " " + result->name;
+    quad_file << op_str << result_name << " " << arg1_name << " " << arg2_name << " " << endl;
 }
 
 void QuadHandler::writeToFile(string command)
@@ -111,7 +111,7 @@ void QuadHandler::bitwiseCast(symbol *arg1, symbol *arg2)
 symbol *QuadHandler::math_op(operation op, symbol *arg1, symbol *arg2)
 {
     implicitCast(arg1, arg2);
-    
+
     string resultName = "t" + to_string(tempVarCounter++);
     symbol *result = new symbol(resultName, arg1->type, 1, 1);
     tempVars.push_back(result);
@@ -205,7 +205,7 @@ void QuadHandler::assign_op(operation op, symbol *dest, symbol *src)
 symbol *QuadHandler::unary_op(operation op, symbol *arg1)
 {
     symbolType type1 = arg1->type;
-    if (type1 != symbolType::INTtype && type1 != symbolType::FLOATtype)
+    if ((type1 != symbolType::INTtype && type1 != symbolType::FLOATtype) || arg1->isConst)
     {
         yyerror(("Invalid type " + symbolTypeName[type1] + " for operation.").c_str());
     }

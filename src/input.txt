@@ -1,1 +1,4 @@
-int x = 5 + 69;
+const int x = 5;
+int y = 2;
+int z = x + y;
+y = y*(z&x+2*8);
