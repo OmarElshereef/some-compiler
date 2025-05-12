@@ -5,7 +5,7 @@
     #include <cstring>
     #include "utils/symbolTable.hpp"
     #include "utils/quadHandler.hpp"
-
+    #pragma once
     symbolTable symbTable = symbolTable();
     QuadHandler quadHandle = QuadHandler("output/quad.txt");
     int symbolTable::numScopes = 0;

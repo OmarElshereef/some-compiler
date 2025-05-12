@@ -3,7 +3,7 @@
 #include <vector>
 #include <map>
 #include "includes.hpp"
-
+#pragma once
 using namespace std;
 
 #ifndef SYMBOLTABLE_HPP

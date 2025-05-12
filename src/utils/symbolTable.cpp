@@ -1,6 +1,6 @@
 #include "symbolTable.hpp"
 #include <vector>
-
+#pragma once
 symbolTable::symbolTable()
 {
     this->scope = 0;
