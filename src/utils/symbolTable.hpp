@@ -150,7 +150,7 @@ struct node
     union
     {
         struct nonConstNode nonConstNode;
-        constNode constNode;
+        constNode constantNode;
     };
 };
 

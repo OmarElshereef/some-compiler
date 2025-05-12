@@ -74,7 +74,7 @@
 
 /* Other tokens */
 %token <sval> ID
-%token <sval> LLINT_CONST LINT_CONST INT_CONST FLOAT_CONST DOUBLE_CONST
+%token <sval> LLINT_CONST LINT_CONST FLOAT_CONST DOUBLE_CONST INT_CONST
 %token <sval> STRING_CONST CHAR_CONST
 
 %type <sval> function_declaration_prototype
@@ -89,7 +89,7 @@
 %type <symboll> assignment
 //%type <symboll> initialization
 %type <symboll> function_call
-%type <sval> integer_value numeric_value
+%type <symboll> integer_value numeric_value
 %type <symbolTypeType> type integer_type numeric_type
 //%type <operationName> assign
 
@@ -143,8 +143,9 @@ declaration
 initialization
     : type ID ASSIGN expression                {
             symbol* sym = symbolTable::current->addSymbol($2,$1,false, true);
+            printf("value: %s\n", $4->name.c_str());
             if (!sym) YYABORT;
-            //quadHandle.assign_op(operation::Assign, sym->name, $4);
+            quadHandle.assign_op(operation::Assign, sym, $4);
         }
     | CONST type ID ASSIGN expression    {
             symbol* sym = symbolTable::current->addSymbol($3,$2,true, true);
@@ -335,27 +336,27 @@ condition :
 
 
 math_or_value : 
-    math_or_value PLUS math_or_value {;}
+    math_or_value PLUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Plus, $1, $3); $$ = rizz;}
     |
-    math_or_value MINUS math_or_value {;}
+    math_or_value MINUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Minus, $1, $3); $$ = rizz;}
     |
-    math_or_value MUL math_or_value {;}
+    math_or_value MUL math_or_value {symbol* rizz = quadHandle.math_op(operation::Mul, $1, $3); $$ = rizz;}
     |
-    math_or_value DIV math_or_value {;}
+    math_or_value DIV math_or_value {symbol* rizz = quadHandle.math_op(operation::Div, $1, $3); $$ = rizz;}
     |
-    math_or_value MOD math_or_value {;}
+    math_or_value MOD math_or_value {symbol* rizz = quadHandle.math_op(operation::Mod, $1, $3); $$ = rizz;}
     |
-    math_or_value BIT_AND math_or_value {;}
+    math_or_value BIT_AND math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_and, $1, $3); $$ = rizz;}
     |
-    math_or_value BIT_OR math_or_value {;}
+    math_or_value BIT_OR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); $$ = rizz;}
     |
-    math_or_value BIT_XOR math_or_value {;}
+    math_or_value BIT_XOR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); $$ = rizz;}
     |
     '(' math_or_value ')' {;}
     |
     MINUS math_or_value {;}
     |
-    numeric_value {;}
+    numeric_value {$$ = $1;}
     ;
 
 unary_expression:
@@ -384,7 +385,7 @@ literal :
     ;
 
 type : 
-    numeric_type {;}
+    numeric_type {$$ = $1;}
     |
     CHAR {;}
     |
@@ -405,7 +406,7 @@ numeric_type :
     ;
 
 integer_type :
-    INT {;}
+    INT {$$ = symbolType::INTtype;}
     |
     LINT {;}
     |
@@ -421,7 +422,7 @@ numeric_value :
     ;
 
 integer_value :
-    INT_CONST               {;}
+    INT_CONST               {symbol* sym = new symbol($1, symbolType::INTtype, 1,1); $$ = sym;}
     |
     LINT_CONST              {;}
     |

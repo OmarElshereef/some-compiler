@@ -111,7 +111,7 @@ void QuadHandler::bitwiseCast(symbol *arg1, symbol *arg2)
 symbol *QuadHandler::math_op(operation op, symbol *arg1, symbol *arg2)
 {
     implicitCast(arg1, arg2);
-
+    
     string resultName = "t" + to_string(tempVarCounter++);
     symbol *result = new symbol(resultName, arg1->type, 1, 1);
     tempVars.push_back(result);

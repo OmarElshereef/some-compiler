@@ -1,0 +1,2 @@
+plus 5 69 t0
+assign t0  x
