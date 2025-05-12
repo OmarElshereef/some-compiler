@@ -154,21 +154,17 @@ declaration
 
 
 initialization
-    : type ID ASSIGN expression                {
+    : type ID ASSIGN expression {
             symbol* sym = symbolTable::current->addSymbol($2,$1,false, true);
-            printf("value: %s\n", $4->name.c_str());
             if (!sym) YYABORT;
             quadHandle.assign_op(operation::Assign, sym, $4);
         }
     | CONST type ID ASSIGN expression    {
             symbol* sym = symbolTable::current->addSymbol($3,$2,true, true);
             if (!sym) YYABORT;
-            //quadHandle.assign_op(operation::Assign, sym->name, $5);
+            quadHandle.assign_op(operation::Assign, sym, $5);
     }
     ;
-
-
-
 
 
 function_definition :
@@ -293,8 +289,6 @@ switch_case :
     ;
 
 expression :
-    literal {$$ = $1;}
-    |
     math_or_value {$$ = $1;}
     |
     '(' expression ')' {$$ = $2;}
@@ -307,63 +301,63 @@ expression :
 condition :
     expression {$$ = $1;}
     |
-    expression EQ expression {;}
+    expression EQ expression {symbol* rizz = quadHandle.rel_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression NEQ expression {;}
+    expression NEQ expression {symbol* rizz = quadHandle.rel_op(operation::Neq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression LT expression {;}
+    expression LT expression {symbol* rizz = quadHandle.rel_op(operation::Lt, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression GT expression {;}
+    expression GT expression {symbol* rizz = quadHandle.rel_op(operation::Gt, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression LTE expression {;}
+    expression LTE expression {symbol* rizz = quadHandle.rel_op(operation::Lte, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression GTE expression {;}
+    expression GTE expression {symbol* rizz = quadHandle.rel_op(operation::Gte, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
     '(' condition ')' {$$ = $2;}
     |
-    NOT condition {;}
+    NOT condition {symbol* rizz = quadHandle.unary_op(operation::Not, $2); if(!rizz) YYABORT; $$ = rizz;}
     |
-    condition AND condition {;}
+    condition AND condition {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    condition OR condition {;}
+    condition OR condition {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     ;
 
-
-
-
 math_or_value : 
-    math_or_value PLUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Plus, $1, $3); $$ = rizz;}
+    math_or_value PLUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Plus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    math_or_value MINUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Minus, $1, $3); $$ = rizz;}
+    math_or_value MINUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Minus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    math_or_value MUL math_or_value {symbol* rizz = quadHandle.math_op(operation::Mul, $1, $3); $$ = rizz;}
+    math_or_value MUL math_or_value {symbol* rizz = quadHandle.math_op(operation::Mul, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    math_or_value DIV math_or_value {symbol* rizz = quadHandle.math_op(operation::Div, $1, $3); $$ = rizz;}
+    math_or_value DIV math_or_value {symbol* rizz = quadHandle.math_op(operation::Div, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    math_or_value MOD math_or_value {symbol* rizz = quadHandle.math_op(operation::Mod, $1, $3); $$ = rizz;}
+    math_or_value MOD math_or_value {symbol* rizz = quadHandle.math_op(operation::Mod, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    math_or_value BIT_AND math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_and, $1, $3); $$ = rizz;}
+    math_or_value BIT_AND math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_and, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    math_or_value BIT_OR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); $$ = rizz;}
+    math_or_value BIT_OR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    math_or_value BIT_XOR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); $$ = rizz;}
+    math_or_value BIT_XOR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    '(' math_or_value ')' {;}
+    '(' math_or_value ')' {$$ = $2;}
     |
-    MINUS math_or_value {;}
+    MINUS math_or_value {symbol* rizz = quadHandle.unary_op(operation::Neg, $2); if(!rizz) YYABORT; $$ = rizz;}
     |
     literal {$$ = $1;}
     ;
 
 unary_expression:
-    ID INC      {;}
+    ID INC      {symbol* rizz = symbolTable::current->findSymbol($1); if(!rizz) YYABORT; $$ = quadHandle.unary_op(operation::Inc, rizz);}
     |
-    ID DEC      {;}
+    ID DEC      {symbol* rizz = symbolTable::current->findSymbol($1); if(!rizz) YYABORT; $$ = quadHandle.unary_op(operation::Dec, rizz);}
     ;
 
 
 assignment :
-    ID ASSIGN expression {;}
+    ID ASSIGN expression {            
+            symbol* sym = symbolTable::current->findSymbolDeclared($1);
+            if (!sym) YYABORT;
+            quadHandle.assign_op(operation::Assign, sym, $3);}
     ;
 
 literal :

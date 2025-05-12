@@ -165,6 +165,23 @@ symbol *symbolTable::findSymbol(string name)
     return NULL;
 }
 
+symbol *symbolTable::findSymbolDeclared(string name)
+{
+    symbolTable *root = current;
+    while (root != NULL)
+    {
+        auto foundSymbol = root->symbols.find(name);
+        if (foundSymbol != root->symbols.end())
+        {
+            return foundSymbol->second;
+        }
+        root = root->parent;
+    }
+    string error = "Symbol " + name + " is not declared.";
+    yyerror(error.c_str());
+    return NULL;
+}
+
 void symbolTable::printSymbolTable(symbolTable *root)
 {
     cout << "\n---------------\n\nScope " << root->scope << ":" << endl;

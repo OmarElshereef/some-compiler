@@ -23,6 +23,7 @@ public:
     string generateLabel();
     int typeRank(symbolType type);
 
+    bool checkArgs(symbol *arg1, symbol *arg2);
     symbol *math_op(operation op, symbol *arg1, symbol *arg2);
     symbol *bit_op(operation op, symbol *arg1, symbol *arg2);
     symbol *unary_op(operation op, symbol *arg1);
