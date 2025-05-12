@@ -384,53 +384,23 @@ literal :
     FALSE                       {;}
     ;
 
-type : 
-    numeric_type {$$ = $1;}
+type :
+    INT         {$$ = symbolType::INTtype;}
     |
-    CHAR {;}
+    LINT         {$$ = symbolType::LINTtype;}
     |
-    STRING {;}
+    LLINT         {$$ = symbolType::LLINTtype;}
     |
-    BOOL {;}
+    FLOAT       {$$ = symbolType::FLOATtype;}
     |
-    VOID {;}
+    DOUBLE       {$$ = symbolType::DOUBLEtype;}
+    |
+    CHAR        {$$ = symbolType::CHARtype;}
+    |
+    STRING      {$$ = symbolType::STRINGtype;}
+    |
+    BOOL        {$$ = symbolType::BOOLtype;}
     ;
-
-
-numeric_type :
-    integer_type {$$ = $1;}
-    |
-    FLOAT {;}
-    |
-    DOUBLE {;}
-    ;
-
-integer_type :
-    INT {$$ = symbolType::INTtype;}
-    |
-    LINT {;}
-    |
-    LLINT {;}
-    ;
-
-numeric_value :
-    integer_value {$$ = $1;}
-    |
-    FLOAT_CONST   {;}
-    |
-    DOUBLE_CONST  {;}
-    ;
-
-integer_value :
-    INT_CONST               {symbol* sym = new symbol($1, symbolType::INTtype, 1,1); $$ = sym;}
-    |
-    LINT_CONST              {;}
-    |
-    LLINT_CONST             {;}
-    ;
-
-%%
-
 
 /* Error handling */
 void yyerror(const char *msg){
