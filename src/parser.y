@@ -282,13 +282,9 @@ switch_statement :
     ;
 
 switch_case :
-    CASE literal ':' {symbTable.changeScope(1);} 
-                program  BREAK ';'
-                {symbTable.changeScope(0);}
+    CASE literal ':' statement;
     |
-    DEFAULT ':' {symbTable.changeScope(1);} 
-                program  BREAK ';'
-                {symbTable.changeScope(0);}
+    DEFAULT ':' statement;
     ;
 
 expression :
@@ -316,8 +312,6 @@ condition :
     |
     expression GTE expression {symbol* rizz = quadHandle.rel_op(operation::Gte, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    '(' condition ')' {$$ = $2;}
-    |
     NOT condition {symbol* rizz = quadHandle.unary_op(operation::Not, $2); if(!rizz) YYABORT; $$ = rizz;}
     |
     condition AND condition {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
@@ -342,8 +336,6 @@ math_or_value :
     math_or_value BIT_OR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
     math_or_value BIT_XOR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    '(' math_or_value ')' {$$ = $2;}
     |
     MINUS math_or_value {symbol* rizz = quadHandle.unary_op(operation::Neg, $2); if(!rizz) YYABORT; $$ = rizz;}
     |
