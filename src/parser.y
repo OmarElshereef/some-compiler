@@ -104,6 +104,8 @@ program :
 
 statement :
         declaration ';'           { printf("Declaration\n"); }
+        |
+        initialization ';'       { printf("Initialization\n"); }
         | 
         assignment ';'            { printf("Assignment\n"); }
         | 
@@ -131,9 +133,9 @@ statement :
 
 
 declaration
-    : type ID ';'                                 {
+    : type ID                                  {
             symbol* sym = symbolTable::current->addSymbol($2,$1,false, false);
-            if (!sym) YYABORT;
+            if (!sym) printf("initialization error\n");
         }
     ;
 
@@ -142,12 +144,12 @@ initialization
     : type ID ASSIGN expression                {
             symbol* sym = symbolTable::current->addSymbol($2,$1,false, true);
             if (!sym) YYABORT;
-            quadHandle.assign_op(operation::Assign, sym->name, $4);
+            //quadHandle.assign_op(operation::Assign, sym->name, $4);
         }
     | CONST type ID ASSIGN expression    {
             symbol* sym = symbolTable::current->addSymbol($3,$2,true, true);
             if (!sym) YYABORT;
-            quadHandle.assign_op(operation::Assign, sym->name, $5);
+            //quadHandle.assign_op(operation::Assign, sym->name, $5);
     }
     ;
 
