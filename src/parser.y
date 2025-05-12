@@ -89,8 +89,7 @@
 %type <symboll> assignment
 //%type <symboll> initialization
 %type <symboll> function_call
-%type <symboll> integer_value numeric_value
-%type <symbolTypeType> type integer_type numeric_type
+%type <symbolTypeType> type 
 //%type <operationName> assign
 
 
@@ -246,9 +245,9 @@ for_loop :
         ;
 
 for_loop_initialization :
-    integer_type ID ASSIGN integer_value {;}
+    INT ID ASSIGN INT_CONST {;}
     |
-    ID ASSIGN integer_value     {;}
+    ID ASSIGN INT_CONST     {;}
     ;
 
 for_loop_condition :
@@ -356,7 +355,7 @@ math_or_value :
     |
     MINUS math_or_value {;}
     |
-    numeric_value {$$ = $1;}
+    literal {$$ = $1;}
     ;
 
 unary_expression:
@@ -403,7 +402,7 @@ type :
     |
     BOOL        {$$ = symbolType::BOOLtype;}
     ;
-
+%%
 /* Error handling */
 void yyerror(const char *msg){
     extern int yylineno;
