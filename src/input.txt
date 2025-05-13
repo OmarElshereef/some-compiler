@@ -1,5 +1,11 @@
-
 int x = 0;
-while(x<10){
-    x++;
+x += 4;
+
+switch(x) {
+    case 4:
+      x++;
+      break;
+    case 1:
+        x--;
+        break;
 }
