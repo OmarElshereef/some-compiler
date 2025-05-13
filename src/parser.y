@@ -439,9 +439,40 @@ unary_expression:
 
 assignment :
     ID ASSIGN expression {            
-            symbol* sym = symbolTable::current->findSymbolDeclared($1);
-            if (!sym) YYABORT;
-            quadHandle.assign_op(operation::Assign, sym, $3);}
+        symbol* sym = symbolTable::current->findSymbolDeclared($1);
+        if (!sym) YYABORT;
+        quadHandle.assign_op(operation::Assign, sym, $3);
+    }
+    |
+    ID ADD_ASSIGN expression {
+        symbol* sym = symbolTable::current->findSymbolDeclared($1);
+        if (!sym) YYABORT;
+        quadHandle.assign_op(operation::Add_assign, sym, $3);
+    }
+    |
+    ID SUB_ASSIGN expression {
+        symbol* sym = symbolTable::current->findSymbolDeclared($1);
+        if (!sym) YYABORT;
+        quadHandle.assign_op(operation::Sub_assign, sym, $3);
+    }
+    |
+    ID MUL_ASSIGN expression {
+        symbol* sym = symbolTable::current->findSymbolDeclared($1);
+        if (!sym) YYABORT;
+        quadHandle.assign_op(operation::Mul_assign, sym, $3);
+    }
+    |
+    ID DIV_ASSIGN expression {
+        symbol* sym = symbolTable::current->findSymbolDeclared($1);
+        if (!sym) YYABORT;
+        quadHandle.assign_op(operation::Div_assign, sym, $3);
+    }
+    |
+    ID MOD_ASSIGN expression {
+        symbol* sym = symbolTable::current->findSymbolDeclared($1);
+        if (!sym) YYABORT;
+        quadHandle.assign_op(operation::Mod_assign, sym, $3);
+    }
     ;
 
 literal :
