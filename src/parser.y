@@ -513,9 +513,10 @@ assignment :
 literal :
     ID  {
         symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
         symbol* temp = symbTable.findSymbol(string($1));
         if (temp == NULL) {
-                temp = new symbol($1, symbolType::UNKNOWN, 1,1);
+                temp = new symbol($1, symbolType::ERROR, 1,1);
         }else{
         symbTable.setUsed(temp);
         }

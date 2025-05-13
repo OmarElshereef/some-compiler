@@ -21,7 +21,8 @@ enum symbolType
     STRINGtype,
     CONSTtype,
     VOIDtype,
-    UNKNOWN
+    UNKNOWN,
+    ERROR
 };
 struct LoopLabels
 {
