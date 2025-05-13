@@ -1,0 +1,6 @@
+jmp L0 on true false
+assign x 0  
+L0:
+jmp L1 on true false
+assign x 0  
+L1:

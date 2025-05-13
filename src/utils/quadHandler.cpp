@@ -1,5 +1,7 @@
 #include "quadHandler.hpp"
+#include "ErrorManger.cpp"
 
+int QuadHandler::lineNumber = 0;
 void QuadHandler::writeToFile(operation op, symbol *arg1, symbol *arg2, symbol *result)
 {
     string op_str = operationToString[op];
@@ -47,14 +49,21 @@ void QuadHandler::implicitCast(symbol *arg1, symbol *arg2)
 
     symbolType type1 = arg1->type;
     symbolType type2 = arg2->type;
-
+    if (type1 == symbolType::UNKNOWN || type2 == symbolType::UNKNOWN)
+    {
+        return;
+    }
     if (type1 != symbolType::INTtype && type1 != symbolType::FLOATtype && type1 != symbolType::BOOLtype && type1 != symbolType::CHARtype)
     {
-        yyerror(("Invalid type " + symbolTypeName[type1] + " for operation.").c_str());
+        // yyerror(("Invalid type " + symbolTypeName[type1] + " for operation.").c_str());
+        errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, ("Invalid type " + symbolTypeName[type1] + " for operation."));
+        return;
     }
     if (type2 != symbolType::INTtype && type2 != symbolType::FLOATtype && type2 != symbolType::BOOLtype && type2 != symbolType::CHARtype)
     {
-        yyerror(("Invalid type " + symbolTypeName[type2] + " for operation.").c_str());
+        // yyerror(("Invalid type " + symbolTypeName[type2] + " for operation.").c_str());
+        errorManager.add(ErrorType::TYPE, lineNumber, arg2->name, ("Invalid type " + symbolTypeName[type2] + " for operation."));
+        return;
     }
 
     if (type1 == type2)
@@ -83,14 +92,21 @@ void QuadHandler::bitwiseCast(symbol *arg1, symbol *arg2)
 
     symbolType type1 = arg1->type;
     symbolType type2 = arg2->type;
-
+    if (type1 == symbolType::UNKNOWN || type2 == symbolType::UNKNOWN)
+    {
+        return;
+    }
     if (type1 != symbolType::INTtype && type1 != symbolType::BOOLtype)
     {
-        yyerror(("Invalid type " + symbolTypeName[type1] + " for operation.").c_str());
+        // yyerror(("Invalid type " + symbolTypeName[type1] + " for operation.").c_str());
+        errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, ("Invalid type " + symbolTypeName[type1] + " for operation."));
+        return;
     }
     if (type2 != symbolType::INTtype && type2 != symbolType::BOOLtype)
     {
-        yyerror(("Invalid type " + symbolTypeName[type2] + " for operation.").c_str());
+        // yyerror(("Invalid type " + symbolTypeName[type2] + " for operation.").c_str());
+        errorManager.add(ErrorType::TYPE, lineNumber, arg2->name, ("Invalid type " + symbolTypeName[type2] + " for operation."));
+        return;
     }
 
     if (type1 == type2)
@@ -139,12 +155,16 @@ symbol *QuadHandler::logic_op(operation op, symbol *arg1, symbol *arg2)
     {
         if (arg1->type != symbolType::BOOLtype)
         {
-            yyerror("Invalid type for logical operation.");
+            // yyerror("Invalid type for logical operation.");
+            errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, "Invalid type for logical operation.");
+            return NULL;
         }
     }
     else if (arg1->type != symbolType::BOOLtype || arg2->type != symbolType::BOOLtype)
     {
-        yyerror("Invalid type for logical operation.");
+        // yyerror("Invalid type for logical operation.");
+        errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, "Invalid type for logical operation.");
+        return NULL;
     }
 
     string resultName = "t" + to_string(tempVarCounter++);
@@ -174,13 +194,25 @@ void QuadHandler::assign_op(operation op, symbol *dest, symbol *src)
     {
         implicitCast(dest, src);
     }
-    if (dest->type == symbolType::VOIDtype || dest->type == symbolType::UNKNOWN || dest->type == symbolType::CONSTtype)
+    else if (op == operation::Assign)
     {
-        yyerror("Can't assign to void type.");
+        if (src->type == symbolType::UNKNOWN || dest->type == symbolType::UNKNOWN)
+        {
+            return;
+        }
     }
-    if (src->type == symbolType::VOIDtype || src->type == symbolType::UNKNOWN || src->type == symbolType::CONSTtype)
+
+    if (dest->type == symbolType::VOIDtype || dest->type == symbolType::CONSTtype)
     {
-        yyerror("Can't assign void type.");
+        // yyerror("Can't assign to void type.");
+        errorManager.add(ErrorType::TYPE, lineNumber, dest->name, "Can't assign to void type.");
+        return;
+    }
+    if (src->type == symbolType::VOIDtype || src->type == symbolType::CONSTtype)
+    {
+        // yyerror("Can't assign void type.");
+        errorManager.add(ErrorType::TYPE, lineNumber, src->name, "Can't assign void type.");
+        return;
     }
 
     if (src->type == symbolType::STRINGtype && dest->type == symbolType::STRINGtype)
@@ -189,7 +221,9 @@ void QuadHandler::assign_op(operation op, symbol *dest, symbol *src)
     }
     else if ((src->type == symbolType::STRINGtype && dest->type != symbolType::STRINGtype) || (src->type != symbolType::STRINGtype && dest->type == symbolType::STRINGtype))
     {
-        yyerror("Invalid type for assignment.");
+        // yyerror("Invalid type for assignment.");
+        errorManager.add(ErrorType::TYPE, lineNumber, src->name, "Invalid type for assignment.");
+        return;
     }
     else
     {
@@ -232,9 +266,15 @@ void QuadHandler::assign_op(operation op, symbol *dest, symbol *src)
 symbol *QuadHandler::unary_op(operation op, symbol *arg1)
 {
     symbolType type1 = arg1->type;
+    if (type1 == symbolType::UNKNOWN)
+    {
+        return NULL;
+    }
     if ((type1 != symbolType::INTtype && type1 != symbolType::FLOATtype) || arg1->isConst)
     {
-        yyerror(("Invalid type " + symbolTypeName[type1] + " for operation.").c_str());
+        // yyerror(("Invalid type " + symbolTypeName[type1] + " for operation.").c_str());
+        errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, ("Invalid type " + symbolTypeName[type1] + " for operation."));
+        return NULL;
     }
 
     writeToFile(op, arg1, NULL, NULL);
@@ -243,9 +283,15 @@ symbol *QuadHandler::unary_op(operation op, symbol *arg1)
 
 void QuadHandler::jump_cond_op(symbol *arg1, string label, bool onTrue)
 {
+    if (arg1->type == symbolType::UNKNOWN)
+    {
+        return;
+    }
     if (arg1->type == symbolType::VOIDtype)
     {
-        yyerror("Invalid type for conditional jump.");
+        // yyerror("Invalid type for conditional jump.");
+        errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, "Invalid type for conditional jump.");
+        return;
     }
 
     string command = "jmp " + label + " on " + arg1->name + " " + (onTrue ? "true" : "false");
@@ -290,18 +336,24 @@ void QuadHandler::return_op(symbol *arg1, symbolType returnType)
     {
         if (returnType != symbolType::VOIDtype)
         {
-            yyerror("Function return type is not void.");
+            // yyerror("Function return type is not void.");
+            errorManager.add(ErrorType::TYPE, lineNumber, "return", "Function return type is not void.");
+            return;
         }
         writeToFile("return");
         return;
     }
     if (returnType == symbolType::UNKNOWN)
     {
-        yyerror("Return cannot be outside function.");
+        // yyerror("Return cannot be outside function.");
+        errorManager.add(ErrorType::TYPE, lineNumber, "return", "Return cannot be outside function.");
+        return;
     }
     else if (!tryCast(arg1, returnType))
     {
-        yyerror("Invalid return type. Cannot cast value to function return type.");
+        // yyerror("Invalid return type. Cannot cast value to function return type.");
+        errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, "Invalid return type. Cannot cast value to function return type.");
+        return;
     }
     string command = "return " + arg1->name + "\n\n";
     writeToFile(command);

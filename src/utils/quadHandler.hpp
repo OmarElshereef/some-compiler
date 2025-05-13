@@ -8,6 +8,7 @@ class QuadHandler
     int labelCounter = 0;
 
 public:
+    static int lineNumber;
     vector<symbol *> tempVars;
     vector<string> tempLabels;
     QuadHandler(string file)

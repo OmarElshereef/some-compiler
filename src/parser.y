@@ -114,9 +114,12 @@ statement :
         | 
         unmatched_statement {;}
         |
-        error ';' {
+        error sync_token {
         yyerrok;
     }
+
+sync_token: ';' | '}' | '\n' ;
+
 
 if_condition_action:
     '(' expression ')' {
@@ -190,16 +193,15 @@ declaration
 initialization
     : type ID ASSIGN expression {
             symbol* sym = symbolTable::current->addSymbol($2,$1,false, true);
-            if (!sym) {
-                printf("initialization error\n");
-                printf("%s %s = %s\n", $1, $2, $4);
+            if (sym!= NULL) {
+                quadHandle.assign_op(operation::Assign, sym, $4);
             }
-            quadHandle.assign_op(operation::Assign, sym, $4);
         }
     | CONST type ID ASSIGN expression    {
             symbol* sym = symbolTable::current->addSymbol($3,$2,true, true);
-            if (!sym) YYABORT;
-            quadHandle.assign_op(operation::Assign, sym, $5);
+            if (sym!= NULL) {
+                quadHandle.assign_op(operation::Assign, sym, $5);
+            }
     }
     ;
 
@@ -509,7 +511,17 @@ assignment :
     ;
 
 literal :
-    ID                          { $$ = symbTable.setUsed(symbTable.findSymbol(string($1))); }
+    ID  {
+        symbTable.lineNumber = yylineno;
+        symbol* temp = symbTable.findSymbol(string($1));
+        if (temp == NULL) {
+                temp = new symbol($1, symbolType::UNKNOWN, 1,1);
+        }else{
+        symbTable.setUsed(temp);
+        }
+        $$ = temp;
+    }   
+
     |
     INT_CONST                   { symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
@@ -544,19 +556,9 @@ type :
 %%
 /* Error handling */
 
-//extern ErrorManager errorManager;
-
 
 void yyerror(const char *msg){
-    /* extern int yylineno;
-    extern char *yytext;
-    //fprintf(stderr, "Error: %s at line %d\n", msg, yylineno);
-    //fprintf(stdout, "\nError: %s at line %d\n", msg, yylineno);
-    fprintf(stdout, "\nError: %s at line %d near token '%s'\n", msg, yylineno, yytext);
-    //exit(1); */
     errorManager.add(SYNTAX, yylineno, yytext, msg);
-    //yyerrok;
-
 }
 
 void yywarn(const char *msg){
