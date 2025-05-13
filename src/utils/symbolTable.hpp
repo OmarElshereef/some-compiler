@@ -168,6 +168,7 @@ public:
     static int numScopes;
     static int lineNumber;
     static symbolType currentType;
+    static bool isCurrentConst;
     int scope;
     map<string, symbol *> symbols;
     symbolTable *parent;

@@ -4,7 +4,6 @@ assign z false
 L0:
 lt t0 y y 
 jmp L1 on t0 false
-inc y  
 not z  
 assign z z  
 jmp L0

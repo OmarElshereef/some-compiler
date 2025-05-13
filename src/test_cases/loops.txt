@@ -1,5 +1,5 @@
 int main() {
-	int y = 10;
+	const int y = 10;
 	bool z = false;
 	for(y; y<y; y++) {
 		z = !z;

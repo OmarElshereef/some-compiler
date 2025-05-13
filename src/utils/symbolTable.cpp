@@ -5,6 +5,8 @@
 #pragma once
 
 symbolType symbolTable::currentType = UNKNOWN;
+bool symbolTable::isCurrentConst = false;
+
 symbolTable::symbolTable()
 {
     this->scope = 0;
