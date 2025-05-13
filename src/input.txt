@@ -1,6 +1,6 @@
 int x = 1;
 
-if(x < 4) {
+if(4) {
     if( x < 3) {
         if (x < 2) {
             int z =4;

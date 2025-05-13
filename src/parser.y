@@ -109,44 +109,48 @@ statement :
         | 
         unmatched_statement {;}
         ;
-                
+
+if_condition_action:
+    '(' condition ')' {
+        string tempLabel = quadHandle.generateLabel();
+        quadHandle.tempLabels.push_back(tempLabel);
+        quadHandle.jump_cond_op($2, tempLabel.c_str(), false);
+    }
+    ;
+
+if_body_action:
+    {
+        string endLabel = quadHandle.generateLabel();
+        quadHandle.tempLabels.push_back(endLabel);
+        quadHandle.writeToFile("jmp " + endLabel);
+        
+        string ifLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
+        quadHandle.tempLabels.erase(quadHandle.tempLabels.begin() + quadHandle.tempLabels.size()-2);
+        quadHandle.writeToFile(ifLabel + ":");
+    }
+    ;
+
+else_end_action:
+    {
+        string endLabel = quadHandle.tempLabels.back();
+        quadHandle.tempLabels.pop_back();
+        quadHandle.writeToFile(endLabel + ":");
+    }
+    ;
+
 matched_statement :
-        IF '(' condition ')' {
-            string tempLabel = quadHandle.generateLabel();
-            quadHandle.tempLabels.push_back(tempLabel);
-            quadHandle.jump_cond_op($3, tempLabel.c_str(), false);
-        } matched_statement ELSE {
-            string ifLabel = quadHandle.tempLabels.back();
-            quadHandle.tempLabels.pop_back();
-            string label = quadHandle.generateLabel();
-            quadHandle.tempLabels.push_back(label);
-            quadHandle.writeToFile("jmp " + label);
-            quadHandle.writeToFile(ifLabel + ":");
-        } 
-        matched_statement {string label = quadHandle.tempLabels.back(); quadHandle.tempLabels.pop_back(); quadHandle.writeToFile(label + ":");} 
+        IF if_condition_action matched_statement if_body_action ELSE matched_statement else_end_action
         | other_stmt {;}
         ;
 
 unmatched_statement :
-        IF '(' condition ')' {
-            string tempLabel = quadHandle.generateLabel();
-            quadHandle.tempLabels.push_back(tempLabel);
-            quadHandle.jump_cond_op($3, tempLabel.c_str(), false);
-        } statement %prec LOWER_THAN_ELSE  {string label = quadHandle.tempLabels.back(); quadHandle.tempLabels.pop_back(); quadHandle.writeToFile(label + ":");} 
-        |
-        IF '(' condition ')' {
-            string tempLabel = quadHandle.generateLabel();
-            quadHandle.tempLabels.push_back(tempLabel);
-            quadHandle.jump_cond_op($3, tempLabel.c_str(), false);
-        } matched_statement ELSE {
-            string ifLabel = quadHandle.tempLabels.back();
+        IF if_condition_action statement %prec LOWER_THAN_ELSE {
+            string label = quadHandle.tempLabels.back();
             quadHandle.tempLabels.pop_back();
-            string label = quadHandle.generateLabel();
-            quadHandle.tempLabels.push_back(label);
-            quadHandle.writeToFile("jmp " + label);
-            quadHandle.writeToFile(ifLabel + ":");
-        } 
-        unmatched_statement {string label = quadHandle.tempLabels.back(); quadHandle.tempLabels.pop_back(); quadHandle.writeToFile(label + ":");}
+            quadHandle.writeToFile(label + ":");
+        }
+        |
+        IF if_condition_action matched_statement if_body_action ELSE unmatched_statement else_end_action
         ;
 
 other_stmt :
