@@ -1,12 +1,8 @@
 int main() {
-	int y = 10, q, t = 1000;
+	int y = 10;
 	bool z = false;
-	for(x; x< y; x++) {
+	for(y; y<y; y++) {
 		z = !z;
-	}
-
-	while(true) {
-		x = z || y;
 	}
 
 	return 0;

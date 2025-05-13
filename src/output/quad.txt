@@ -1,7 +1,14 @@
 proc INT main 
 assign y 10  
-assign t 1000  
 assign z false  
 L0:
-lt t0 x y 
+lt t0 y y 
 jmp L1 on t0 false
+inc y  
+not z  
+assign z z  
+jmp L0
+L1:
+return 0
+
+
