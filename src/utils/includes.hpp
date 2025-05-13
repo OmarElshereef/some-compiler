@@ -37,6 +37,7 @@ enum operation {
                 Bit_or,
                 Bit_xor,
                 Neg,
+                Bz,
             };
 
 const string operationToString[] = {
@@ -65,7 +66,8 @@ const string operationToString[] = {
     "bit_and",
     "bit_or",
     "bit_xor",
-    "Neg"
+    "Neg",
+    "Bz",
 };
 
 #endif

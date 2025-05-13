@@ -9,6 +9,7 @@ class QuadHandler
 
 public:
     vector<symbol *> tempVars;
+    vector<string> tempLabels;
     QuadHandler(string file)
     {
         quad_file = ofstream(file);

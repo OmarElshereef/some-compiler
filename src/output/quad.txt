@@ -1,2 +1,13 @@
-assign x 0  
-assign y 0  
+assign x 1  
+jmp L0 on 4 false
+lt t0 x 3 
+jmp L1 on t0 false
+lt t1 x 2 
+jmp L2 on t1 false
+assign z 4  
+L2:
+assign z 2  
+L1:
+assign z 1  
+L0:
+assign z 0  
