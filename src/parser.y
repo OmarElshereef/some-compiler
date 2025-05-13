@@ -83,9 +83,7 @@
 
 %type <sval> function_declaration_prototype
 //%type <symboll> evaluate_expression 
-%type <symboll> math_or_value
-%type <symboll> expression 
-%type <symboll> condition 
+%type <symboll> expression
 %type <symboll> unary_expression
 %type <symboll> literal
 %type <symboll> assignment
@@ -111,7 +109,7 @@ statement :
         ;
 
 if_condition_action:
-    '(' condition ')' {
+    '(' expression ')' {
         string tempLabel = quadHandle.generateLabel();
         quadHandle.tempLabels.push_back(tempLabel);
         quadHandle.jump_cond_op($2, tempLabel.c_str(), false);
@@ -120,13 +118,12 @@ if_condition_action:
 
 if_body_action:
     {
-        string endLabel = quadHandle.generateLabel();
-        quadHandle.tempLabels.push_back(endLabel);
-        quadHandle.writeToFile("jmp " + endLabel);
-        
-        string ifLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
-        quadHandle.tempLabels.erase(quadHandle.tempLabels.begin() + quadHandle.tempLabels.size()-2);
-        quadHandle.writeToFile(ifLabel + ":");
+        string endLabel = quadHandle.tempLabels.back();
+        quadHandle.tempLabels.pop_back();
+        string elseLabel = quadHandle.generateLabel();
+        quadHandle.tempLabels.push_back(elseLabel);
+        quadHandle.writeToFile("jmp " + elseLabel);
+        quadHandle.writeToFile(endLabel + ":"); 
     }
     ;
 
@@ -144,11 +141,7 @@ matched_statement :
         ;
 
 unmatched_statement :
-        IF if_condition_action statement %prec LOWER_THAN_ELSE {
-            string label = quadHandle.tempLabels.back();
-            quadHandle.tempLabels.pop_back();
-            quadHandle.writeToFile(label + ":");
-        }
+        IF if_condition_action matched_statement %prec LOWER_THAN_ELSE else_end_action
         |
         IF if_condition_action matched_statement if_body_action ELSE unmatched_statement else_end_action
         ;
@@ -160,7 +153,7 @@ other_stmt :
         | 
         assignment ';'            { printf("Assignment\n"); }
         | 
-        unary_expression ';'      { printf("Unary Expression\n"); }
+        expression ';'      { printf("Expression\n"); }
         | 
         switch_statement          { printf("Switch case end\n"); }
         | 
@@ -171,10 +164,6 @@ other_stmt :
         for_loop                  { printf("For loop end\n"); }
         | 
         function_definition       { printf("Function_definition end\n"); }
-        | 
-        function_call ';'         { printf("Function_call\n"); }
-        | 
-        ID ';'                    { printf("ID\n"); }
         | 
         '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
         ;
@@ -277,13 +266,13 @@ do_loop :
            '{' program '}' 
            WHILE 
            {symbTable.changeScope(0);} 
-           '(' condition ')'      {quadHandle.jump_cond_op($9, $<sval>2, true);}
+           '(' expression ')'      {quadHandle.jump_cond_op($9, $<sval>2, true);}
         ;
 
 for_loop :
         FOR 
         '(' for_loop_initialization ';' 
-        condition ';' 
+        expression ';' 
         for_loop_increment ')' 
         statement 
         ;
@@ -320,32 +309,35 @@ switch_case :
     ;
 
 expression :
-    math_or_value {$$ = $1;}
-    |
     '(' expression ')' {$$ = $2;}
     |
     unary_expression {$$ = $1;}
     |
     function_call {$$ = $1;}
-    ;
-
-condition :
-    expression {$$ = $1;}
     |
-    expression EQ expression {
-        symbol* rizz = quadHandle.rel_op(operation::Eq, $1, $3);
-        if (!rizz) YYABORT;
-        $$ = rizz;}
+    expression PLUS expression {symbol* rizz = quadHandle.math_op(operation::Plus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression NEQ expression {
-        symbol* rizz = quadHandle.rel_op(operation::Neq, $1, $3);
-        if (!rizz) YYABORT;
-        $$ = rizz;}
+    expression MINUS expression {symbol* rizz = quadHandle.math_op(operation::Minus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression LT expression {
-        symbol* rizz = quadHandle.rel_op(operation::Lt, $1, $3);
-        if (!rizz) YYABORT;
-        $$ = rizz;}
+    expression MUL expression {symbol* rizz = quadHandle.math_op(operation::Mul, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    |
+    expression DIV expression {symbol* rizz = quadHandle.math_op(operation::Div, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    |
+    expression MOD expression {symbol* rizz = quadHandle.math_op(operation::Mod, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    |
+    expression BIT_AND expression {symbol* rizz = quadHandle.bit_op(operation::Bit_and, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    |
+    expression BIT_OR expression {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    |
+    expression BIT_XOR expression {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    |
+    MINUS expression {symbol* rizz = quadHandle.unary_op(operation::Neg, $2); if(!rizz) YYABORT; $$ = rizz;}
+    |
+    expression EQ expression {symbol* rizz = quadHandle.rel_op(operation::Eq, $1, $3);if (!rizz) YYABORT;$$ = rizz;}
+    |
+    expression NEQ expression {symbol* rizz = quadHandle.rel_op(operation::Neq, $1, $3);if (!rizz) YYABORT;$$ = rizz;}
+    |
+    expression LT expression {symbol* rizz = quadHandle.rel_op(operation::Lt, $1, $3);if (!rizz) YYABORT;$$ = rizz;}
     |
     expression GT expression {symbol* rizz = quadHandle.rel_op(operation::Gt, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
@@ -353,32 +345,11 @@ condition :
     |
     expression GTE expression {symbol* rizz = quadHandle.rel_op(operation::Gte, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    NOT condition {symbol* rizz = quadHandle.unary_op(operation::Not, $2); if(!rizz) YYABORT; $$ = rizz;}
+    NOT expression {symbol* rizz = quadHandle.unary_op(operation::Not, $2); if(!rizz) YYABORT; $$ = rizz;}
     |
-    condition AND condition {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression AND expression {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    condition OR condition {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    ;
-
-
-math_or_value : 
-    math_or_value PLUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Plus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    math_or_value MINUS math_or_value {symbol* rizz = quadHandle.math_op(operation::Minus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    math_or_value MUL math_or_value {symbol* rizz = quadHandle.math_op(operation::Mul, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    math_or_value DIV math_or_value {symbol* rizz = quadHandle.math_op(operation::Div, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    math_or_value MOD math_or_value {symbol* rizz = quadHandle.math_op(operation::Mod, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    math_or_value BIT_AND math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_and, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    math_or_value BIT_OR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    math_or_value BIT_XOR math_or_value {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
-    |
-    MINUS math_or_value {symbol* rizz = quadHandle.unary_op(operation::Neg, $2); if(!rizz) YYABORT; $$ = rizz;}
+    expression OR expression {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
     literal {$$ = $1;}
     ;
