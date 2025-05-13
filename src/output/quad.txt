@@ -1,1 +1,10 @@
-assign y 10  
+assign x 1  
+assign i 0  
+L0:
+lt t0 i 9 
+jmp L1 on t0 false
+inc i  
+plus t1 x 1 
+assign x t1  
+jmp L0
+L1:

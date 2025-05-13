@@ -344,7 +344,7 @@ for_loop :
 
 for_loop_initialization :
     INT ID ASSIGN INT_CONST {
-                                symbol* temp = symbTable.addOrUpdateSymbol(string($2), symbolType::INTtype, new symbol(string($4), symbolType::INTtype, 1,1),0,1);
+                                symbol* temp = symbTable.addSymbol(string($2), symbolType::INTtype, 0, 1);
                                 quadHandle.assign_op(operation::Assign, temp, new symbol($4, symbolType::INTtype, 1,1));
                             }
     |
@@ -355,7 +355,7 @@ for_loop_initialization :
                                     lookup = symbTable.addSymbol(string($1), symbolType::ERROR, 1, 1);
                                     quadHandle.assign_op(operation::Assign, lookup, new symbol($3, symbolType::INTtype, 1,1));    
                                 } else {
-                                    symbol* temp = symbTable.addOrUpdateSymbol(string($1),symbolType::UNKNOWN,lookup,lookup->isConst,lookup->isInitializated);
+                                    symbol* temp = symbTable.updateSymbol(string($1));
                                     quadHandle.assign_op(operation::Assign, temp, new symbol($3, symbolType::INTtype, 1,1));
                                 }
                             }
