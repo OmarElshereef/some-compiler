@@ -1,0 +1,13 @@
+int main() {
+	int y = 10, q, t = 1000;
+	bool z = false;
+	for(x; x< y; x++) {
+		z = !z;
+	}
+
+	while(true) {
+		x = z || y;
+	}
+
+	return 0;
+}

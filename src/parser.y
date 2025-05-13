@@ -160,9 +160,9 @@ unmatched_statement :
         ;
 
 other_stmt :
-        declaration ';'             { printf("Declaration\n"); }
+        start_declaration ';'             { printf("Declaration\n"); }
         | 
-        initialization ';'        { printf("Initialization\n"); }
+        start_initialization ';'        { printf("Initialization\n"); }
         | 
         assignment ';'            { printf("Assignment\n"); }
         | 
@@ -181,30 +181,38 @@ other_stmt :
         '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
         ;
 
-
-declaration
-    : type ID                                  {
-            symbol* sym = symbolTable::current->addSymbol($2,$1,false, false);
-            if (!sym) printf("initialization error\n");
-        }
-    ;
-
-
-initialization
+start_initialization
     : type ID ASSIGN expression {
-            symbol* sym = symbolTable::current->addSymbol($2,$1,false, true);
-            if (sym!= NULL) {
+            symbolTable::currentType = $1;
+            symbol* sym = symbolTable::current->addSymbol(string($2), $1, false, false);
+            if (sym != NULL) {
                 quadHandle.assign_op(operation::Assign, sym, $4);
             }
-        }
-    | CONST type ID ASSIGN expression    {
-            symbol* sym = symbolTable::current->addSymbol($3,$2,true, true);
-            if (sym!= NULL) {
-                quadHandle.assign_op(operation::Assign, sym, $5);
-            }
-    }
+    } declaration_initialization
     ;
 
+start_declaration
+    : type ID {
+            symbolTable::currentType = $1;
+            symbol* sym = symbolTable::current->addSymbol(string($2), $1, false, false);
+            if (!sym) printf("initialization error\n");
+        } declaration_initialization
+    ;
+
+declaration_initialization
+    : ',' ID {
+            symbol* sym = symbolTable::current->addSymbol(std::string($2), symbolTable::currentType, false, true);
+            if (!sym) yyerror("initialization error\n");
+        } declaration_initialization
+    | 
+    ',' ID ASSIGN expression {
+            symbol* sym = symbolTable::current->addSymbol(std::string($2), symbolTable::currentType, false, true);
+            if (sym != NULL) {
+                quadHandle.assign_op(operation::Assign, sym, $4);
+            }
+        } declaration_initialization
+    |
+    ;
 
 function_definition :
     function_declaration_prototype {if(inFunction) yyerror("You cannot declare a function inside a function."); inFunction = 1;} '{' program return_statement ';' '}' { 
@@ -327,8 +335,24 @@ for_loop_initialization :
                             }
     |
     ID ASSIGN INT_CONST     {
-                                symbol* temp = symbTable.addOrUpdateSymbol(string($1),symbolType::UNKNOWN,new symbol(string($3), symbolType::INTtype, 1,1),0,1);
-                                quadHandle.assign_op(operation::Assign, temp, new symbol($3, symbolType::INTtype, 1,1));
+                                symbol* lookup = symbTable.findSymbol(string($1));
+                                if (lookup == NULL) {
+                                    printf("Error: %s not declared\n", $1); 
+                                    lookup = symbTable.addSymbol(string($1), symbolType::ERROR, 1, 1);
+                                    quadHandle.assign_op(operation::Assign, lookup, new symbol($3, symbolType::INTtype, 1,1));    
+                                } else {
+                                    symbol* temp = symbTable.addOrUpdateSymbol(string($1),symbolType::UNKNOWN,lookup,lookup->isConst,lookup->isInitializated);
+                                    quadHandle.assign_op(operation::Assign, temp, new symbol($3, symbolType::INTtype, 1,1));
+                                }
+                            }
+    |
+    ID                      {
+                                symbol* temp = symbTable.findSymbol(string($1));
+                                if (temp == NULL) {
+                                    temp = new symbol($1, symbolType::ERROR, 1,1);
+                                }else{
+                                    symbTable.setUsed(temp);
+                                }
                             }
     ;
 
@@ -458,9 +482,9 @@ expression :
     |
     NOT expression {symbol* rizz = quadHandle.unary_op(operation::Not, $2); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression AND expression {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression AND expression {symbol* rizz = quadHandle.logic_op(operation::And, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
-    expression OR expression {symbol* rizz = quadHandle.logic_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression OR expression {symbol* rizz = quadHandle.logic_op(operation::Or, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
     literal {$$ = $1;}
     ;
@@ -529,6 +553,8 @@ literal :
     FLOAT_CONST                 { symbol* temp = new symbol($1, symbolType::FLOATtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
     CHAR_CONST                  { symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
+    |
+    DOUBLE_CONST               { symbol* temp = new symbol($1, symbolType::DOUBLEtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
     STRING_CONST                { symbol* temp = new symbol($1, symbolType::STRINGtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |

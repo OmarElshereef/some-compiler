@@ -1,0 +1,18 @@
+int main() {
+	int x = 0;
+	float y = 4.6432333;
+	double n = 4.32432423;
+	bool z = 10;
+	bool q = -3;
+	char c = 'r';
+	string s = "hello kys";
+
+
+	int p = x;
+	c = p;
+	x = y;
+	y = n;
+	q = c;
+	n = z;
+	return 0;
+}

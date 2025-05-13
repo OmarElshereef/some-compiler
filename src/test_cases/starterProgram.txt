@@ -1,0 +1,6 @@
+int main() {
+	int x = 10;
+	float y = x;
+	char z = y + x;
+	return 0;
+}

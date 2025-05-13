@@ -89,13 +89,11 @@ ID	[a-zA-Z][a-zA-Z0-9_]*
 
 
     /* constants */
-(0|[1-9][0-9]*)[lL][lL]     {yylval.sval = strdup(yytext); return LLINT_CONST;}
-(0|[1-9][0-9]*)[lL]     {yylval.sval = strdup(yytext); return LINT_CONST;}
-(0|[1-9][0-9]*)             {yylval.sval = strdup(yytext); return INT_CONST;}
-(0|[1-9][0-9]*)\.[0-9]+[fF]     {yylval.sval = strdup(yytext); return FLOAT_CONST;}
-(0|[1-9][0-9]*)\.[0-9]+        {yylval.sval = strdup(yytext); return DOUBLE_CONST;}
-
-    /* strings */
+-?(0|[1-9][0-9]*)[lL][lL]     {if (strcmp(yytext, "-0ll") == 0) { printf("Error: Invalid token %s\n", yytext); exit(1); } yylval.sval = strdup(yytext); return LLINT_CONST;}
+-?(0|[1-9][0-9]*)[lL]         {if (strcmp(yytext, "-0l") == 0) { printf("Error: Invalid token %s\n", yytext); exit(1); } yylval.sval = strdup(yytext); return LINT_CONST;}
+-?(0|[1-9][0-9]*)             {if (strcmp(yytext, "-0") == 0) { printf("Error: Invalid token %s\n", yytext); exit(1); } yylval.sval = strdup(yytext); return INT_CONST;}
+-?(0|[1-9][0-9]*)\.[0-9]{0,8}([eE][-+]?[0-9]+)?[fF] {if (strncmp(yytext, "-0.", 3) == 0) { printf("Error: Invalid token %s\n", yytext); exit(1); } yylval.sval = strdup(yytext); return FLOAT_CONST;}
+-?(0|[1-9][0-9]*)\.[0-9]{0,16}([eE][-+]?[0-9]+)?     {if (strncmp(yytext, "-0.", 3) == 0) { printf("Error: Invalid token %s\n", yytext); exit(1); } yylval.sval = strdup(yytext); return DOUBLE_CONST;}
 (\"([^\\\"\n]|\\.)*\") { yylval.sval = strdup(yytext); return STRING_CONST; }
 
 

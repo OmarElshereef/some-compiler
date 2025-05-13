@@ -1,6 +1,7 @@
-proc INT x INT a INT b 
-plus t0 a 1 
-assign y t0  
-return y
-
-
+proc INT main 
+assign y 10  
+assign t 1000  
+assign z false  
+L0:
+lt t0 x y 
+jmp L1 on t0 false

@@ -167,6 +167,7 @@ public:
     static vector<vector<symbolTable *>> symbolTableAdj;
     static int numScopes;
     static int lineNumber;
+    static symbolType currentType;
     int scope;
     map<string, symbol *> symbols;
     symbolTable *parent;

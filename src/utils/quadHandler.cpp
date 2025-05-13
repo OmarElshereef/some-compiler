@@ -151,17 +151,23 @@ symbol *QuadHandler::bit_op(operation op, symbol *arg1, symbol *arg2)
 symbol *QuadHandler::logic_op(operation op, symbol *arg1, symbol *arg2)
 {
 
-    if (op == operation::Not)
+    if (arg1->type != symbolType::BOOLtype || arg2->type != symbolType::BOOLtype)
     {
-        if (arg1->type != symbolType::BOOLtype)
-        {
-            // yyerror("Invalid type for logical operation.");
-            errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, "Invalid type for logical operation.");
-            return NULL;
+        if(tryCast(arg1, symbolType::BOOLtype)) {
+            arg1->type = symbolType::BOOLtype;
         }
-    }
-    else if (arg1->type != symbolType::BOOLtype || arg2->type != symbolType::BOOLtype)
-    {
+        if(tryCast(arg2, symbolType::BOOLtype)) {
+            arg2->type = symbolType::BOOLtype;
+        }
+        printf("arg1: %s, arg2: %s\n", symbolTypeName[arg1->type].c_str(), symbolTypeName[arg2->type].c_str());
+        if(arg1->type == symbolType::BOOLtype && arg2->type == symbolType::BOOLtype) {
+            string resultName = "t" + to_string(tempVarCounter++);
+            symbol *result = new symbol(resultName, arg1->type, 1, 1);
+            tempVars.push_back(result);
+
+            writeToFile(op, arg1, arg2, result);
+            return result;
+        }
         // yyerror("Invalid type for logical operation.");
         errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, "Invalid type for logical operation.");
         return NULL;
@@ -270,6 +276,17 @@ symbol *QuadHandler::unary_op(operation op, symbol *arg1)
     if (type1 == symbolType::ERROR)
     {
         return NULL;
+    }
+    if(operationToString[op] == "not") {
+        if(tryCast(arg1, symbolType::BOOLtype)) {
+            arg1->type = symbolType::BOOLtype;
+            writeToFile(op, arg1, NULL, NULL);
+            return arg1;
+        } else {
+            // yyerror("Invalid type for unary operation.");
+            errorManager.add(ErrorType::TYPE, lineNumber, arg1->name, "Invalid type for unary operation.");
+            return NULL;
+        }
     }
     if ((type1 != symbolType::INTtype && type1 != symbolType::FLOATtype) || arg1->isConst)
     {

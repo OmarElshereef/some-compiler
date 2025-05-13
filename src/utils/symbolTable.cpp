@@ -3,6 +3,8 @@
 #include "includes.hpp"
 #include <vector>
 #pragma once
+
+symbolType symbolTable::currentType = UNKNOWN;
 symbolTable::symbolTable()
 {
     this->scope = 0;
@@ -34,7 +36,7 @@ type: declaration type of the symbol
 value: value of the symbol to be updated
 */
 symbol *symbolTable::addOrUpdateSymbol(string name, symbolType type, symbol *value, bool isConst, bool isInitialization)
-{
+{   
     symbolTable *root = current;
     bool firstIteration = true;
     while (root != NULL)
@@ -100,6 +102,7 @@ symbol *symbolTable::addOrUpdateSymbol(string name, symbolType type, symbol *val
 
 symbol *symbolTable::addSymbol(string name, symbolType type, bool isConst, bool isInitialization)
 {
+    printf("Adding symbol %s\n", name.c_str());
     if (isConst && !isInitialization)
     {
         // yyerror(("Constant " + name + " must be initialized at declaration.").c_str());
