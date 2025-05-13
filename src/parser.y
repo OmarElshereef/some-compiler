@@ -111,14 +111,42 @@ statement :
         ;
                 
 matched_statement :
-        IF '(' expression ')' matched_statement ELSE matched_statement {printf("matched if end\n");} 
+        IF '(' condition ')' {
+            string tempLabel = quadHandle.generateLabel();
+            quadHandle.tempLabels.push_back(tempLabel);
+            quadHandle.jump_cond_op($3, tempLabel.c_str(), false);
+        } matched_statement ELSE {
+            string ifLabel = quadHandle.tempLabels.back();
+            quadHandle.tempLabels.pop_back();
+            string label = quadHandle.generateLabel();
+            quadHandle.tempLabels.push_back(label);
+            quadHandle.writeToFile("jmp " + label);
+            quadHandle.writeToFile(ifLabel + ":");
+        } 
+        matched_statement {string label = quadHandle.tempLabels.back(); quadHandle.tempLabels.pop_back(); quadHandle.writeToFile(label + ":");} 
         | other_stmt {;}
         ;
 
 unmatched_statement :
-        IF '(' expression ')' statement %prec LOWER_THAN_ELSE  {printf("unmatched if end\n");} 
+        IF '(' condition ')' {
+            string tempLabel = quadHandle.generateLabel();
+            quadHandle.tempLabels.push_back(tempLabel);
+            quadHandle.jump_cond_op($3, tempLabel.c_str(), false);
+        } statement %prec LOWER_THAN_ELSE  {string label = quadHandle.tempLabels.back(); quadHandle.tempLabels.pop_back(); quadHandle.writeToFile(label + ":");} 
         |
-        IF '(' expression ')' matched_statement ELSE unmatched_statement {printf("unmatched if end\n");} 
+        IF '(' condition ')' {
+            string tempLabel = quadHandle.generateLabel();
+            quadHandle.tempLabels.push_back(tempLabel);
+            quadHandle.jump_cond_op($3, tempLabel.c_str(), false);
+        } matched_statement ELSE {
+            string ifLabel = quadHandle.tempLabels.back();
+            quadHandle.tempLabels.pop_back();
+            string label = quadHandle.generateLabel();
+            quadHandle.tempLabels.push_back(label);
+            quadHandle.writeToFile("jmp " + label);
+            quadHandle.writeToFile(ifLabel + ":");
+        } 
+        unmatched_statement {string label = quadHandle.tempLabels.back(); quadHandle.tempLabels.pop_back(); quadHandle.writeToFile(label + ":");}
         ;
 
 other_stmt :
@@ -300,11 +328,20 @@ expression :
 condition :
     expression {$$ = $1;}
     |
-    expression EQ expression {symbol* rizz = quadHandle.rel_op(operation::Eq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression EQ expression {
+        symbol* rizz = quadHandle.rel_op(operation::Eq, $1, $3);
+        if (!rizz) YYABORT;
+        $$ = rizz;}
     |
-    expression NEQ expression {symbol* rizz = quadHandle.rel_op(operation::Neq, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression NEQ expression {
+        symbol* rizz = quadHandle.rel_op(operation::Neq, $1, $3);
+        if (!rizz) YYABORT;
+        $$ = rizz;}
     |
-    expression LT expression {symbol* rizz = quadHandle.rel_op(operation::Lt, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression LT expression {
+        symbol* rizz = quadHandle.rel_op(operation::Lt, $1, $3);
+        if (!rizz) YYABORT;
+        $$ = rizz;}
     |
     expression GT expression {symbol* rizz = quadHandle.rel_op(operation::Gt, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
     |
