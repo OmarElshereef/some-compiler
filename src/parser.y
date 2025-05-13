@@ -202,11 +202,27 @@ function_definition :
         }
     ;
 
-function_declaration_prototype : //gives  warning: type clash on default action: error
-    VOID ID {symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2),symbolType::VOIDtype,NULL,0,1)); symbTable.changeScope(1); currFunctionReturn = symbolType::VOIDtype;} '(' function_parameters_optional ')' {quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); $$=$2;}  // isInitialized = 1 because it is a function
+function_declaration_prototype :
+    VOID ID {
+        symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2), symbolType::VOIDtype, NULL, 0, 1)); 
+        symbTable.changeScope(1); 
+        currFunctionReturn = symbolType::VOIDtype;
+    }
+    '(' function_parameters_optional ')' { 
+        quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); 
+        $$ = $2;
+    }
     |
-    type ID {symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2),$1,NULL,0,1)); symbTable.changeScope(1); currFunctionReturn = $1;} '(' function_parameters_optional ')' {quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); $$=$2;}  // isInitialized = 1 because it is a function
-    ;
+    type ID { 
+        symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2), $1, NULL, 0, 1)); 
+        symbTable.changeScope(1); 
+        currFunctionReturn = $1;
+    }
+    '(' function_parameters_optional ')' { 
+        quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); 
+        $$ = $2;
+    }
+;
 
 function_parameters_optional :
     function_parameters             {;}
@@ -231,15 +247,19 @@ return_statement :
     ;
 
 function_call : 
-    ID '(' function_arguments_optional ')' 
-    {
+    ID '(' function_arguments_optional ')' {
         symbol* temp = symbTable.findSymbol(string($1));
-        if(!functionParameters.count(string(temp->name))) yyerror("There is not a function with this name.");
+        if (!functionParameters.count(string(temp->name))) {
+            yyerror("Function not declared.");
+        }
         vector<symbol*> params = functionParameters[string(temp->name)];
-        if(params.size() != functionCallParameters.size()) yyerror("Number of parameters does not match.");
-        for(int i = 0; i < params.size(); i++)
-        {
-            if(!quadHandle.tryCast(functionCallParameters[i],params[i]->type)) yyerror("Parameter types do not match.");
+        if (params.size() != functionCallParameters.size()) {
+            yyerror("Parameter count mismatch.");
+        }
+        for (int i = 0; i < params.size(); i++) {
+            if (!quadHandle.tryCast(functionCallParameters[i], params[i]->type)) {
+                yyerror("Parameter type mismatch.");
+            }
         }
         symbol* ret = quadHandle.call_func_op(temp, functionCallParameters);
         functionCallParameters.clear();
@@ -271,19 +291,37 @@ do_loop :
         ;
 
 for_loop :
-        FOR 
-        '(' for_loop_initialization ';' 
-        expression ';' 
-        for_loop_increment ')' 
-        statement 
+        FOR {   symbTable.changeScope(1); 
+                string label = quadHandle.generateLabel(); 
+                $<sval>$ = strdup(label.data());} 
+            '(' for_loop_initialization {quadHandle.writeToFile(string($<sval>2)+":");} ';' 
+            for_loop_condition {
+                string label = quadHandle.generateLabel(); 
+                $<sval>$ = strdup(label.data()); 
+                quadHandle.jump_cond_op($7, label, false);} ';' 
+            for_loop_increment ')' 
+            '{' program '}' 
+            {   quadHandle.jump_uncond_op($<sval>2); 
+                symbTable.changeScope(0); 
+                quadHandle.writeToFile(string($<sval>8) + ":");};
         ;
 
 for_loop_initialization :
-    INT ID ASSIGN INT_CONST {;}
+    INT ID ASSIGN INT_CONST {
+                                symbol* temp = symbTable.addOrUpdateSymbol(string($2), symbolType::INTtype, new symbol(string($4), symbolType::INTtype, 1,1),0,1);
+                                quadHandle.assign_op(operation::Assign, temp, new symbol($4, symbolType::INTtype, 1,1));
+                            }
     |
-    ID ASSIGN INT_CONST     {;}
+    ID ASSIGN INT_CONST     {
+                                symbol* temp = symbTable.addOrUpdateSymbol(string($1),symbolType::UNKNOWN,new symbol(string($3), symbolType::INTtype, 1,1),0,1);
+                                quadHandle.assign_op(operation::Assign, temp, new symbol($3, symbolType::INTtype, 1,1));
+                            }
     ;
 
+
+for_loop_condition :
+    expression            {$$ = $1;}
+    ;
 
 for_loop_increment :
     expression            {;}
@@ -387,19 +425,19 @@ assignment :
     ;
 
 literal :
-    ID                          {$$ = symbTable.setUsed(symbTable.findSymbol(string($1)));}
+    ID                          { $$ = symbTable.setUsed(symbTable.findSymbol(string($1))); }
     |
-    INT_CONST                   {symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
+    INT_CONST                   { symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
-    FLOAT_CONST                 {symbol* temp = new symbol($1, symbolType::FLOATtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
+    FLOAT_CONST                 { symbol* temp = new symbol($1, symbolType::FLOATtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
-    CHAR_CONST                  {symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
+    CHAR_CONST                  { symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
-    STRING_CONST                {symbol* temp = new symbol($1, symbolType::STRINGtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
+    STRING_CONST                { symbol* temp = new symbol($1, symbolType::STRINGtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
-    TRUE                        {symbol* temp = new symbol("true", symbolType::BOOLtype,1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
+    TRUE                        { symbol* temp = new symbol("true", symbolType::BOOLtype,1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
-    FALSE                       {symbol* temp = new symbol("false", symbolType::BOOLtype,1,1); quadHandle.tempVars.push_back(temp); $$ = temp;}
+    FALSE                       { symbol* temp = new symbol("false", symbolType::BOOLtype,1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     ;
 
 type :
