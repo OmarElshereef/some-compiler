@@ -23,6 +23,11 @@ enum symbolType
     VOIDtype,
     UNKNOWN
 };
+struct LoopLabels
+{
+    std::string startLabel;
+    std::string endLabel;
+};
 const vector<string> symbolTypeName = {"LINT", "LLINT", "DOUBLE", "FLOAT", "INT", "BOOL", "CHAR", "STRING", "CONST", "VOID", "UNKNOWN"};
 
 class constNode
@@ -179,7 +184,7 @@ public:
     struct symbol *findSymbol(string name);
 
     struct symbol *findSymbolDeclared(string name);
-    
+
     void printSymbolTable(symbolTable *table);
 
     static void cleanUp();

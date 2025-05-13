@@ -1,9 +1,2 @@
-assign x 5  
-assign y 2  
-plus t0 x y 
-assign z t0  
-mul t1 2 8 
-plus t2 x t1 
-bit_and t3 z t2 
-mul t4 y t3 
-assign y t4  
+assign x 0  
+assign y 0  

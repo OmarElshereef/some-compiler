@@ -17,7 +17,6 @@
     symbolType currFunctionReturn = symbolType::UNKNOWN;
     string currSwitchLabel = "";
     symbol* currSwitchVar = NULL;
-
     int yylex();
 
     int inFunction = 0;
@@ -27,6 +26,7 @@
     char *sval;
     symbol* symboll;
     symbolType symbolTypeType;
+    LoopLabels* loopLabels;
     operation operationName;
 }
 
@@ -90,6 +90,7 @@
 %type <symboll> literal
 %type <symboll> assignment
 //%type <symboll> initialization
+%type <loopLabels> while_prefix
 %type <symboll> function_call
 %type <symbolTypeType> type 
 //%type <operationName> assign
@@ -269,10 +270,27 @@ for_loop_increment :
     assignment            {;}
     ;
 
-while_loop :
-    WHILE 
-    '(' expression ')' 
-    statement    {;}
+while_loop
+    : WHILE while_prefix  
+    statement {
+        quadHandle.jump_uncond_op($2->startLabel);  // Jump to start of loop
+        quadHandle.writeToFile($2->endLabel + ":"); // Label for loop exit
+
+        delete $2;  // cleanup
+    }
+    ;
+
+while_prefix
+    : '(' expression ')' {
+        LoopLabels* labels = new LoopLabels();
+        labels->startLabel = quadHandle.generateLabel();
+        labels->endLabel = quadHandle.generateLabel();
+
+        quadHandle.writeToFile(labels->startLabel + ":");
+        quadHandle.jump_cond_op($2, labels->endLabel, false);  // ifFalse cond goto end
+
+        $$ = labels;
+    }
     ;
 
 switch_statement :
