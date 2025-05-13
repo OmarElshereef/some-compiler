@@ -1,6 +1,6 @@
-jmp L0 on true false
-assign x 0  
-L0:
-jmp L1 on true false
-assign x 0  
-L1:
+proc INT x INT a INT b 
+plus t0 a 1 
+assign y t0  
+return y
+
+

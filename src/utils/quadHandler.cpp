@@ -49,7 +49,7 @@ void QuadHandler::implicitCast(symbol *arg1, symbol *arg2)
 
     symbolType type1 = arg1->type;
     symbolType type2 = arg2->type;
-    if (type1 == symbolType::UNKNOWN || type2 == symbolType::UNKNOWN)
+    if (type1 == symbolType::ERROR || type2 == symbolType::ERROR)
     {
         return;
     }
@@ -92,7 +92,7 @@ void QuadHandler::bitwiseCast(symbol *arg1, symbol *arg2)
 
     symbolType type1 = arg1->type;
     symbolType type2 = arg2->type;
-    if (type1 == symbolType::UNKNOWN || type2 == symbolType::UNKNOWN)
+    if (type1 == symbolType::ERROR || type2 == symbolType::ERROR)
     {
         return;
     }
@@ -196,7 +196,7 @@ void QuadHandler::assign_op(operation op, symbol *dest, symbol *src)
     }
     else if (op == operation::Assign)
     {
-        if (src->type == symbolType::UNKNOWN || dest->type == symbolType::UNKNOWN)
+        if (src->type == symbolType::ERROR || dest->type == symbolType::ERROR)
         {
             return;
         }
@@ -260,13 +260,14 @@ void QuadHandler::assign_op(operation op, symbol *dest, symbol *src)
             writeToFile(op, src, NULL, dest);
             break;
         }
+        dest->isInitializated = true;
     }
 }
 
 symbol *QuadHandler::unary_op(operation op, symbol *arg1)
 {
     symbolType type1 = arg1->type;
-    if (type1 == symbolType::UNKNOWN)
+    if (type1 == symbolType::ERROR)
     {
         return NULL;
     }
@@ -283,7 +284,7 @@ symbol *QuadHandler::unary_op(operation op, symbol *arg1)
 
 void QuadHandler::jump_cond_op(symbol *arg1, string label, bool onTrue)
 {
-    if (arg1->type == symbolType::UNKNOWN)
+    if (arg1->type == symbolType::ERROR)
     {
         return;
     }
