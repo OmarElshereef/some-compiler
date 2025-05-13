@@ -1,7 +1,13 @@
 int x = 1;
-int y = 4;
-if(4) {
-    y++;
-} else if(false){
-    x++;
+
+switch(x) {
+    case 4:
+        int z = 1;
+        break;
+    case 3:
+        int d = 3;
+        break;
+    default:
+        int y = 2;
+    break;
 }
