@@ -1,0 +1,13 @@
+assign x 0  
+add_assign x 4  
+minus t0 x 4 
+jmp L1 on t0 false
+inc x  
+jmp L0
+L1:
+minus t1 t0 1 
+jmp L2 on t1 false
+dec x  
+jmp L0
+L2:
+L0:

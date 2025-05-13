@@ -366,6 +366,7 @@ switch_statement :
     SWITCH '(' expression ')' {
             string mainLabel = quadHandle.generateLabel();
             quadHandle.tempLabels.push_back(mainLabel);
+            quadHandle.tempVars.push_back($3);
         }  
                              '{' switch_case '}' 
                              {printf("switch end\n");}
@@ -373,9 +374,12 @@ switch_statement :
 
 switch_case :
     CASE literal ':' {
+        symbol* literal = quadHandle.tempVars[quadHandle.tempVars.size()-2];
         string startLabel = quadHandle.generateLabel();
+        symbol* compare = quadHandle.math_op(operation::Minus, literal, $2);
+
         quadHandle.tempLabels.push_back(startLabel);
-        quadHandle.jump_cond_op($2, startLabel, false);
+        quadHandle.jump_cond_op(compare, startLabel, false);
     } statement BREAK ';' {
         string mainLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
         string endLabel = quadHandle.tempLabels.back();
@@ -387,19 +391,23 @@ switch_case :
 
 switch_closing:
     CASE literal ':' {
+        symbol* literal = quadHandle.tempVars[quadHandle.tempVars.size()-2];
         string startLabel = quadHandle.generateLabel();
+        symbol* compare = quadHandle.math_op(operation::Minus, literal, $2);
+
         quadHandle.tempLabels.push_back(startLabel);
-        quadHandle.jump_cond_op($2, startLabel, false);
+        quadHandle.jump_cond_op(compare, startLabel, false);
     } statement BREAK ';' {
         string mainLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
         string endLabel = quadHandle.tempLabels.back();
         quadHandle.tempLabels.pop_back();
         quadHandle.jump_uncond_op(mainLabel);
         quadHandle.writeToFile((endLabel + ":").c_str());
-    }
+    } switch_closing
     |
     DEFAULT ':' statement BREAK ';' {quadHandle.writeToFile((quadHandle.tempLabels.back() + ":").c_str()); quadHandle.tempLabels.pop_back();}
     |
+    {quadHandle.writeToFile((quadHandle.tempLabels.back() + ":").c_str()); quadHandle.tempLabels.pop_back();}
     ;
 
 expression :
