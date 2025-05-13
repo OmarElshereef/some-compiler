@@ -1,12 +1,7 @@
 int x = 1;
-
+int y = 4;
 if(4) {
-    if( x < 3) {
-        if (x < 2) {
-            int z =4;
-        }
-        int z =2;
-    }
-    int z =1;
+    y++;
+} else if(false){
+    x++;
 }
-int z =0;
