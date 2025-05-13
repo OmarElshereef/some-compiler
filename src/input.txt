@@ -1,11 +1,6 @@
 
-int x = "Hello, World!";
+int a(int a, int b {
+    return a + b;
+}
 
-int y = "Hello, World!";
-
-
-int z = "Hello, World!";
-
-
-int a = "Hello, World!";
-
+int x = 0;

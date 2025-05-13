@@ -5,9 +5,11 @@
     #include <cstring>
     #include "utils/symbolTable.hpp"
     #include "utils/quadHandler.hpp"
+    #include "utils/ErrorManger.cpp"
     #pragma once
     symbolTable symbTable = symbolTable();
     QuadHandler quadHandle = QuadHandler("output/quad.txt");
+    ErrorManager errorManager ;
     int symbolTable::numScopes = 0;
     vector<vector<symbolTable*>> symbolTable::symbolTableAdj = vector<vector<symbolTable*>>(1,vector<symbolTable*>());
     symbolTable* symbolTable::current = &symbTable;
@@ -18,6 +20,8 @@
     string currSwitchLabel = "";
     symbol* currSwitchVar = NULL;
     int yylex();
+    extern char *yytext;
+    extern int yylineno;
 
     int inFunction = 0;
     %}
@@ -109,7 +113,10 @@ statement :
         matched_statement  {;}
         | 
         unmatched_statement {;}
-        ;
+        |
+        error ';' {
+        yyerrok;
+    }
 
 if_condition_action:
     '(' expression ')' {
@@ -536,13 +543,20 @@ type :
     ;
 %%
 /* Error handling */
+
+//extern ErrorManager errorManager;
+
+
 void yyerror(const char *msg){
-    extern int yylineno;
+    /* extern int yylineno;
     extern char *yytext;
     //fprintf(stderr, "Error: %s at line %d\n", msg, yylineno);
     //fprintf(stdout, "\nError: %s at line %d\n", msg, yylineno);
     fprintf(stdout, "\nError: %s at line %d near token '%s'\n", msg, yylineno, yytext);
-    //exit(1);
+    //exit(1); */
+    errorManager.add(SYNTAX, yylineno, yytext, msg);
+    //yyerrok;
+
 }
 
 void yywarn(const char *msg){
@@ -567,6 +581,7 @@ int main(int argc, char *argv[]){
     yyparse();
     symbTable.printSymbolTable(symbolTable::current);
     symbolTable::cleanUp();
+    errorManager.reportAll();
     cout << "cleanup done" << endl;
 
     return 0;
