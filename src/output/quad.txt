@@ -1,9 +1,8 @@
-assign x 5  
-assign y 2  
-plus t0 x y 
-assign z t0  
-mul t1 2 8 
-plus t2 x t1 
-bit_and t3 z t2 
-mul t4 y t3 
-assign y t4  
+assign x 1  
+lt t0 x 4 
+jmp L0 on t0 false
+lt t1 x 3 
+jmp L1 on t1 false
+lt t2 x 2 
+jmp L2 on t2 false
+assign z 4  
