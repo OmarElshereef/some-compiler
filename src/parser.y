@@ -370,18 +370,33 @@ switch_statement :
 
 switch_case :
     CASE literal ':' {
-            string startLabel = quadHandle.generateLabel();
-            quadHandle.tempLabels.push_back(startLabel);
-            quadHandle.jump_cond_op($2, startLabel, false);
-        } statement BREAK ';' {
-            string mainLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
-            string endLabel = quadHandle.tempLabels.back();
-            quadHandle.tempLabels.pop_back();
-            quadHandle.jump_uncond_op(mainLabel);
-            quadHandle.writeToFile((endLabel + ":").c_str());
-        } switch_case
+        string startLabel = quadHandle.generateLabel();
+        quadHandle.tempLabels.push_back(startLabel);
+        quadHandle.jump_cond_op($2, startLabel, false);
+    } statement BREAK ';' {
+        string mainLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
+        string endLabel = quadHandle.tempLabels.back();
+        quadHandle.tempLabels.pop_back();
+        quadHandle.jump_uncond_op(mainLabel);
+        quadHandle.writeToFile((endLabel + ":").c_str());
+    } switch_closing
+    ;
+
+switch_closing:
+    CASE literal ':' {
+        string startLabel = quadHandle.generateLabel();
+        quadHandle.tempLabels.push_back(startLabel);
+        quadHandle.jump_cond_op($2, startLabel, false);
+    } statement BREAK ';' {
+        string mainLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
+        string endLabel = quadHandle.tempLabels.back();
+        quadHandle.tempLabels.pop_back();
+        quadHandle.jump_uncond_op(mainLabel);
+        quadHandle.writeToFile((endLabel + ":").c_str());
+    }
     |
     DEFAULT ':' statement BREAK ';' {quadHandle.writeToFile((quadHandle.tempLabels.back() + ":").c_str()); quadHandle.tempLabels.pop_back();}
+    |
     ;
 
 expression :
