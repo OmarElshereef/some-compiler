@@ -186,7 +186,7 @@ start_initialization
     : type ID ASSIGN expression {
             symbolTable::currentType = $1;
             symbolTable::isCurrentConst = false;
-            symbol* sym = symbolTable::current->addSymbol(string($2), $1, false, true);
+            symbol* sym = symbolTable::current->addSymbol($2, $1, false, true);
             if (sym != NULL) {
                 quadHandle.assign_op(operation::Assign, sym, $4);
             }
@@ -195,7 +195,8 @@ start_initialization
     CONST type ID ASSIGN expression {
             symbolTable::currentType = $2;
             symbolTable::isCurrentConst = true;
-            symbol* sym = symbolTable::current->addSymbol(string($3), $2, true, true);
+            printf("Initialization on %s\n", $3);
+            symbol* sym = symbolTable::current->addSymbol($3, $2, true, true);
             if (sym != NULL) {
                 quadHandle.assign_op(operation::Assign, sym, $5);
             }
@@ -206,31 +207,25 @@ start_declaration
     : type ID {
             symbolTable::currentType = $1;
             symbolTable::isCurrentConst = false;
-            symbol* sym = symbolTable::current->addSymbol(string($2), $1, false, false);
-            if (!sym) printf("initialization error\n");
-        } declaration_initialization
-    |
-    CONST type ID {
-            symbolTable::currentType = $2;
-            symbolTable::isCurrentConst = true;
-            symbol* sym = symbolTable::current->addSymbol(string($3), $2, true, false);
+            symbol* sym = symbolTable::current->addSymbol($2, $1, false, false);
             if (!sym) printf("initialization error\n");
         } declaration_initialization
     ;
 
 declaration_initialization
     : ',' ID {
-            symbol* sym = symbolTable::current->addSymbol(std::string($2), symbolTable::currentType, symbolTable::isCurrentConst, true);
+            symbol* sym = symbolTable::current->addSymbol($2, symbolTable::currentType, symbolTable::isCurrentConst, true);
             if (!sym) yyerror("initialization error\n");
         } declaration_initialization
     | 
     ',' ID ASSIGN expression {
-            symbol* sym = symbolTable::current->addSymbol(std::string($2), symbolTable::currentType, symbolTable::isCurrentConst, true);
+            symbol* sym = symbolTable::current->addSymbol($2, symbolTable::currentType, symbolTable::isCurrentConst, true);
             if (sym != NULL) {
                 quadHandle.assign_op(operation::Assign, sym, $4);
             }
         } declaration_initialization
     |
+    {;}
     ;
 
 function_definition :

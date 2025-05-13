@@ -1,9 +1,1 @@
-int main() {
-	const int y = 10;
-	bool z = false;
-	for(y; y<y; y++) {
-		z = !z;
-	}
-
-	return 0;
-}
+int y = 10;
