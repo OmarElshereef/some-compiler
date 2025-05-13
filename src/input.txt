@@ -1,11 +1,11 @@
-int x = 0;
-x += 4;
 
-switch(x) {
-    case 4:
-      x++;
-      break;
-    case 1:
-        x--;
-        break;
-}
+int x = "Hello, World!";
+
+int y = "Hello, World!";
+
+
+int z = "Hello, World!";
+
+
+int a = "Hello, World!";
+

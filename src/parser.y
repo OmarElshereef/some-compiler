@@ -183,7 +183,10 @@ declaration
 initialization
     : type ID ASSIGN expression {
             symbol* sym = symbolTable::current->addSymbol($2,$1,false, true);
-            if (!sym) YYABORT;
+            if (!sym) {
+                printf("initialization error\n");
+                printf("%s %s = %s\n", $1, $2, $4);
+            }
             quadHandle.assign_op(operation::Assign, sym, $4);
         }
     | CONST type ID ASSIGN expression    {
@@ -527,9 +530,11 @@ type :
 /* Error handling */
 void yyerror(const char *msg){
     extern int yylineno;
-    fprintf(stderr, "Error: %s at line %d\n", msg, yylineno);
-    fprintf(stdout, "\nError: %s at line %d\n", msg, yylineno);
-    exit(1);
+    extern char *yytext;
+    //fprintf(stderr, "Error: %s at line %d\n", msg, yylineno);
+    //fprintf(stdout, "\nError: %s at line %d\n", msg, yylineno);
+    fprintf(stdout, "\nError: %s at line %d near token '%s'\n", msg, yylineno, yytext);
+    //exit(1);
 }
 
 void yywarn(const char *msg){
