@@ -87,8 +87,10 @@
 %type <symboll> unary_expression
 %type <symboll> literal
 %type <symboll> assignment
+%type <symboll> for_loop_condition
 //%type <symboll> initialization
 %type <loopLabels> while_prefix
+%type <loopLabels> while_label
 %type <symboll> function_call
 %type <symbolTypeType> type 
 //%type <operationName> assign
@@ -340,17 +342,22 @@ while_loop
     ;
 
 while_prefix
-    : '(' expression ')' {
+    : while_label '(' expression ')' {
+        quadHandle.jump_cond_op($3, $1->endLabel, false);
+        $$ = $1;
+    }
+    ;
+
+while_label
+    : {
         LoopLabels* labels = new LoopLabels();
         labels->startLabel = quadHandle.generateLabel();
         labels->endLabel = quadHandle.generateLabel();
 
-        quadHandle.writeToFile(labels->startLabel + ":");
-        quadHandle.jump_cond_op($2, labels->endLabel, false);  // ifFalse cond goto end
-
+        quadHandle.writeToFile(labels->startLabel + ":");  // emit label BEFORE expr
         $$ = labels;
     }
-    ;
+
 
 switch_statement :
     SWITCH '(' expression ')' {

@@ -1,11 +1,7 @@
-assign x 1  
-jmp L1 on 4 false
-assign z 1  
+assign x 0  
+L0:
+lt t0 x 10 
+jmp L1 on t0 false
+inc x  
 jmp L0
 L1:
-jmp L2 on 3 false
-assign d 3  
-jmp L0
-L2:
-assign y 2  
-L0:
