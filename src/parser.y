@@ -554,8 +554,6 @@ literal :
     |
     LLINT_CONST                 { symbol* temp = new symbol($1, symbolType::LLINTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
-    DOUBLE_CONST                { symbol* temp = new symbol($1, symbolType::DOUBLEtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
-    |
     FLOAT_CONST                 { symbol* temp = new symbol($1, symbolType::FLOATtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
     |
     CHAR_CONST                  { symbol* temp = new symbol($1, symbolType::INTtype, 1,1); quadHandle.tempVars.push_back(temp); $$ = temp; }
