@@ -198,7 +198,34 @@ void QuadHandler::assign_op(operation op, symbol *dest, symbol *src)
             quad_file << "CAST " << src->name << " to " << symbolTypeName[dest->type] << endl;
         }
         src->type = dest->type;
-        writeToFile(op, src, NULL, dest);
+        symbol *temp;
+        switch (op)
+        {
+        case operation::Add_assign:
+            temp = math_op(operation::Plus, dest, src);
+            writeToFile(operation::Assign, temp, NULL, dest);
+            break;
+        case operation::Sub_assign:
+            temp = math_op(operation::Minus, dest, src);
+            writeToFile(operation::Assign, temp, NULL, dest);
+            break;
+        case operation::Mul_assign:
+            temp = math_op(operation::Mul, dest, src);
+            writeToFile(operation::Assign, temp, NULL, dest);
+            break;
+        case operation::Div_assign:
+            temp = math_op(operation::Div, dest, src);
+            writeToFile(operation::Assign, temp, NULL, dest);
+            break;
+        case operation::Mod_assign:
+            temp = math_op(operation::Mod, dest, src);
+            writeToFile(operation::Assign, temp, NULL, dest);
+            break;
+
+        default:
+            writeToFile(op, src, NULL, dest);
+            break;
+        }
     }
 }
 
