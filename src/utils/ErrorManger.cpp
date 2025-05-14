@@ -37,6 +37,7 @@ public:
 
     void reportAll()
     {
+        int errorCount = errors.size();
         for (const auto &err : errors)
         {
             std::string typeStr;
@@ -53,6 +54,7 @@ public:
                 break;
             case WARNING:
                 typeStr = "Warning";
+                errorCount--;
                 break;
             }
 
@@ -60,9 +62,9 @@ public:
                       << " near '" << err.token << "': " << err.message << "\n";
         }
 
-        if (!errors.empty())
+        if (errorCount > 0)
         {
-            std::cerr << "\nCompilation failed with " << errors.size() << " error(s).\n";
+            std::cerr << "\nCompilation failed with " << errorCount << " error(s).\n";
             exit(1);
         }
     }

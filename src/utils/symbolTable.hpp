@@ -178,8 +178,6 @@ public:
     // direction = true means enter a new scope downward, false means leave the current scope and go to the parent scope
     void changeScope(bool direction);
 
-    struct symbol *addOrUpdateSymbol(string name, symbolType type, symbol *value, bool isConst, bool isInitialization);
-
     struct symbol *addSymbol(string name, symbolType type, bool isConst, bool isInitialization);
 
     struct symbol *updateSymbol(string name);
@@ -187,7 +185,7 @@ public:
 
     struct symbol *findSymbol(string name);
 
-    struct symbol *findSymbolDeclared(string name);
+    struct symbol *useSymbol(string name);
 
     void printSymbolTable(symbolTable *table);
 

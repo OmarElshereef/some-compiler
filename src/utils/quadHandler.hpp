@@ -18,7 +18,7 @@ public:
 
     void writeToFile(operation op, symbol *arg1, symbol *arg2, symbol *result);
     void writeToFile(string command);
-
+    int errors = 0;
     void implicitCast(symbol *arg1, symbol *arg2);
     void bitwiseCast(symbol *arg1, symbol *arg2);
     bool tryCast(symbol *arg1, symbolType type);

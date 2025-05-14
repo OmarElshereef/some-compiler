@@ -1,10 +1,65 @@
-assign x 1  
+proc INT square INT x 
+mul t0 x x 
+return t0
+
+
+proc FLOAT multiply FLOAT a FLOAT b 
+mul t1 a b 
+return t1
+
+
+proc CHAR to_upper CHAR c 
+return c
+
+
+proc VOID print_hello 
+CAST 'H' to CHAR
+assign c 'H'  
 assign i 0  
 L0:
-lt t0 i 9 
-jmp L1 on t0 false
-inc i  
-plus t1 x 1 
-assign x t1  
+lt t2 i 5 
+jmp L1 on t2 false
+call to_upper t3 c 
+assign c t3  
+plus t4 i 1 
+assign i t4  
 jmp L0
 L1:
+proc INT average INT a INT b INT c 
+plus t5 a b 
+plus t6 t5 c 
+assign sum t6  
+div t7 sum 3 
+return t7
+
+
+proc INT max INT a INT b 
+gt t8 a b 
+jmp L2 on t8 false
+return a
+
+
+jmp L3
+L2:
+return b
+
+
+L3:
+proc INT zomba 
+assign c 1  
+proc INT main 
+call average t9 1 2 3 
+assign x t9  
+call square t10 x 
+assign y t10  
+CAST 'h' to CHAR
+assign c 'h'  
+assign i 0  
+call average t11 x y i 
+assign z t11  
+call to_upper t12 c 
+assign c t12  
+call print_hello t13 
+return 0
+
+

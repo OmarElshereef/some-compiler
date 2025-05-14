@@ -1,5 +1,51 @@
-int x = 1;
+int square(int x) {
+    return x * x;
+}
 
-for(int i=0; i<9; i++){
-    x=x+1;
+float multiply(float a, float b) {
+    return a * b;
+}
+
+char to_upper(char c) {
+    return c;
+}
+
+void print_hello() {
+    char c = 'H';
+    int i = 0;
+    while (i < 5) {
+        c = to_upper(c);
+        i = i + 1;
+    }
+}
+
+int average(int a, int b, int c) {
+    int sum = a + b + c;
+    return sum / 3;
+}
+int max(int a, int b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+int zomba(){
+    int c = 1;
+}
+// asdfafs
+
+/*adasdf*/
+int main() {
+
+    int x = average(1, 2, 3);
+    int y = square(x);
+    char c = 'h';
+    int i = 0;
+    int z = average(x, y, i);
+    c = to_upper(c);
+    print_hello();
+
+    return 0;
 }

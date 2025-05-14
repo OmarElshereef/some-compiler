@@ -24,6 +24,7 @@
     extern int yylineno;
 
     int inFunction = 0;
+    bool hasReturn = false;
     %}
 
 %union {
@@ -178,12 +179,16 @@ other_stmt :
         for_loop                  { printf("For loop end\n"); }
         | 
         function_definition       { printf("Function_definition end\n"); }
+        |
+        return_statement ';' { printf("Return statement end\n"); }
         | 
         '{' {symbTable.changeScope(1);} program '}' {symbTable.changeScope(0);}    { printf("Scope end\n"); }
         ;
 
 start_initialization
     : type ID ASSIGN expression {
+            symbTable.lineNumber = yylineno;
+            quadHandle.lineNumber = yylineno;
             symbolTable::currentType = $1;
             symbolTable::isCurrentConst = false;
             symbol* sym = symbolTable::current->addSymbol($2, $1, false, true);
@@ -193,6 +198,8 @@ start_initialization
     } declaration_initialization
     |
     CONST type ID ASSIGN expression {
+            symbTable.lineNumber = yylineno;
+            quadHandle.lineNumber = yylineno;
             symbolTable::currentType = $2;
             symbolTable::isCurrentConst = true;
             printf("Initialization on %s\n", $3);
@@ -205,6 +212,8 @@ start_initialization
 
 start_declaration
     : type ID {
+            symbTable.lineNumber = yylineno;
+            quadHandle.lineNumber = yylineno;
             symbolTable::currentType = $1;
             symbolTable::isCurrentConst = false;
             symbol* sym = symbolTable::current->addSymbol($2, $1, false, false);
@@ -214,11 +223,15 @@ start_declaration
 
 declaration_initialization
     : ',' ID {
+            symbTable.lineNumber = yylineno;
+            quadHandle.lineNumber = yylineno;
             symbol* sym = symbolTable::current->addSymbol($2, symbolTable::currentType, symbolTable::isCurrentConst, true);
             if (!sym) yyerror("initialization error\n");
         } declaration_initialization
     | 
     ',' ID ASSIGN expression {
+            symbTable.lineNumber = yylineno;
+            quadHandle.lineNumber = yylineno;
             symbol* sym = symbolTable::current->addSymbol($2, symbolTable::currentType, symbolTable::isCurrentConst, true);
             if (sym != NULL) {
                 quadHandle.assign_op(operation::Assign, sym, $4);
@@ -228,37 +241,69 @@ declaration_initialization
     {;}
     ;
 
-function_definition :
-    function_declaration_prototype {if(inFunction) yyerror("You cannot declare a function inside a function."); inFunction = 1;} '{' program return_statement ';' '}' { 
-        inFunction = 0; 
-        symbTable.changeScope(0); 
-        functionParameters[$<sval>1] = currentFunctionParameters;
+function_definition
+    : function_declaration_prototype {
+        if (inFunction) {
+            errorManager.add(SEMANTIC, yylineno, yytext, "You cannot declare a function inside a function.");
+            YYABORT;
+        }
+        inFunction = 1;
+    }
+    '{' program  '}' {
+        if(hasReturn == false && currFunctionReturn != symbolType::VOIDtype) {
+            errorManager.add(SEMANTIC, yylineno, yytext, "Function must return a value.");
+        }
+        hasReturn = false;
+        inFunction = 0;
+        symbTable.changeScope(0);
+        functionParameters[$1] = currentFunctionParameters;
         currentFunctionParameters.clear();
         currFunctionReturn = symbolType::UNKNOWN;
-        }
-    ;
-
-function_declaration_prototype :
-    VOID ID {
-        symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2), symbolType::VOIDtype, NULL, 0, 1)); 
-        symbTable.changeScope(1); 
-        currFunctionReturn = symbolType::VOIDtype;
-    }
-    '(' function_parameters_optional ')' { 
-        quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); 
-        $$ = $2;
-    }
-    |
-    type ID { 
-        symbTable.setUsed(symbTable.addOrUpdateSymbol(string($2), $1, NULL, 0, 1)); 
-        symbTable.changeScope(1); 
-        currFunctionReturn = $1;
-    }
-    '(' function_parameters_optional ')' { 
-        quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters); 
-        $$ = $2;
     }
 ;
+
+function_declaration_prototype
+    : VOID ID {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        if (inFunction) {
+            errorManager.add(SEMANTIC, yylineno, yytext, "You cannot declare a function inside a function.");
+            YYABORT;
+        }
+        symbol* funName = symbTable.addSymbol(string($2), symbolType::VOIDtype, 0, 1);
+        if (funName == NULL) {
+            funName = new symbol($2, symbolType::ERROR, 1, 1);
+        }
+        symbTable.setUsed(funName);
+        symbTable.changeScope(1);
+        currFunctionReturn = symbolType::VOIDtype;
+    }
+    '(' function_parameters_optional ')' {
+        quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters);
+        $$ = $2;  
+    }
+    
+    | type ID {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        if (inFunction) {
+            errorManager.add(SEMANTIC, yylineno, yytext, "You cannot declare a function inside a function.");
+            YYABORT;
+        }
+        symbol* funName = symbTable.addSymbol(string($2), $1, 0, 1);
+        if (funName == NULL) {
+            funName = new symbol($2, symbolType::ERROR, 1, 1);
+        }
+        symbTable.setUsed(funName);
+        symbTable.changeScope(1);
+        currFunctionReturn = $1;
+    }
+    '(' function_parameters_optional ')' {
+        quadHandle.declare_func_op(symbTable.findSymbol(string($2)), currentFunctionParameters);
+        $$ = $2;  
+    }
+;
+
 
 function_parameters_optional :
     function_parameters             {;}
@@ -273,29 +318,64 @@ function_parameters :
     ;
 
 function_parameter:
-    type ID             {symbol* s = symbTable.addOrUpdateSymbol(string($2),$1,NULL,0,1); currentFunctionParameters.push_back(s);} // isInitialized = 1 because it is a function
+    type ID             {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* s = symbTable.addSymbol(string($2),$1,0,1);
+        if (s == NULL) {
+            s = new symbol($2, symbolType::ERROR, 1,1);
+        }
+        currentFunctionParameters.push_back(s);
+     } 
     ;
 
 return_statement :
-    RETURN expression   {quadHandle.return_op($2, currFunctionReturn);}
+    RETURN expression   {symbTable.lineNumber = yylineno;
+            quadHandle.lineNumber = yylineno;
+            if(inFunction == 0) {
+                errorManager.add(SEMANTIC, yylineno, yytext, "Return statement outside of function.");
+            }
+            printf("function return type: %d\n", currFunctionReturn);
+            printf("expression type: %d\n", $2->type);
+            if(currFunctionReturn !=$2->type) {
+                errorManager.add(SEMANTIC, yylineno, yytext, "Function return type mismatch.");
+            }
+            hasReturn = true;
+            quadHandle.return_op($2, currFunctionReturn);
+            }
     |
-    RETURN              {quadHandle.return_op(NULL, currFunctionReturn);}
+    RETURN              {symbTable.lineNumber = yylineno;
+            quadHandle.lineNumber = yylineno;
+            if(inFunction == 0) {
+                errorManager.add(SEMANTIC, yylineno, yytext, "Return statement outside of function.");
+            }
+            hasReturn = true;
+            quadHandle.return_op(NULL, currFunctionReturn);
+            }
     ;
 
 function_call : 
     ID '(' function_arguments_optional ')' {
-        symbol* temp = symbTable.findSymbol(string($1));
-        if (!functionParameters.count(string(temp->name))) {
-            yyerror("Function not declared.");
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* temp = symbTable.useSymbol(string($1));
+        if (temp == NULL) {
+            temp = new symbol($1, symbolType::ERROR, 1,1);
+            errorManager.add(SEMANTIC, yylineno, yytext, "Function not declared.");
+        }
+        else{
+            if (!functionParameters.count(string(temp->name))) {
+            errorManager.add(SEMANTIC, yylineno, yytext, "Function not declared.");
         }
         vector<symbol*> params = functionParameters[string(temp->name)];
         if (params.size() != functionCallParameters.size()) {
-            yyerror("Parameter count mismatch.");
+            errorManager.add(SEMANTIC, yylineno, yytext, "Parameter count mismatch.");
         }
         for (int i = 0; i < params.size(); i++) {
             if (!quadHandle.tryCast(functionCallParameters[i], params[i]->type)) {
-                yyerror("Parameter type mismatch.");
+                errorManager.add(SEMANTIC, yylineno, yytext, "Parameter type mismatch.");
             }
+        }
         }
         symbol* ret = quadHandle.call_func_op(temp, functionCallParameters);
         functionCallParameters.clear();
@@ -344,29 +424,27 @@ for_loop :
 
 for_loop_initialization :
     INT ID ASSIGN INT_CONST {
+                                symbTable.lineNumber = yylineno;
+                                quadHandle.lineNumber = yylineno;
                                 symbol* temp = symbTable.addSymbol(string($2), symbolType::INTtype, 0, 1);
+                                if(temp == NULL) {
+                                    temp = new symbol($2, symbolType::ERROR, 1,1);
+                                }
                                 quadHandle.assign_op(operation::Assign, temp, new symbol($4, symbolType::INTtype, 1,1));
                             }
     |
     ID ASSIGN INT_CONST     {
-                                symbol* lookup = symbTable.findSymbol(string($1));
-                                if (lookup == NULL) {
-                                    printf("Error: %s not declared\n", $1); 
-                                    lookup = symbTable.addSymbol(string($1), symbolType::ERROR, 1, 1);
-                                    quadHandle.assign_op(operation::Assign, lookup, new symbol($3, symbolType::INTtype, 1,1));    
-                                } else {
-                                    symbol* temp = symbTable.updateSymbol(string($1));
-                                    quadHandle.assign_op(operation::Assign, temp, new symbol($3, symbolType::INTtype, 1,1));
-                                }
+                                symbTable.lineNumber = yylineno;
+                                quadHandle.lineNumber = yylineno;
+                                symbol* temp = symbTable.updateSymbol(string($1));
+
+                                quadHandle.assign_op(operation::Assign, temp, new symbol($3, symbolType::INTtype, 1,1));
                             }
     |
     ID                      {
-                                symbol* temp = symbTable.findSymbol(string($1));
-                                if (temp == NULL) {
-                                    temp = new symbol($1, symbolType::ERROR, 1,1);
-                                }else{
-                                    symbTable.setUsed(temp);
-                                }
+                                symbTable.lineNumber = yylineno;
+                                quadHandle.lineNumber = yylineno;
+                                symbol* temp = symbTable.useSymbol(string($1));
                             }
     ;
 
@@ -421,6 +499,8 @@ switch_statement :
 
 switch_case :
     CASE literal ':' {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
         symbol* literal = quadHandle.tempVars[quadHandle.tempVars.size()-2];
         string startLabel = quadHandle.generateLabel();
         symbol* compare = quadHandle.math_op(operation::Minus, literal, $2);
@@ -428,6 +508,8 @@ switch_case :
         quadHandle.tempLabels.push_back(startLabel);
         quadHandle.jump_cond_op(compare, startLabel, false);
     } statement BREAK ';' {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
         string mainLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
         string endLabel = quadHandle.tempLabels.back();
         quadHandle.tempLabels.pop_back();
@@ -438,6 +520,8 @@ switch_case :
 
 switch_closing:
     CASE literal ':' {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
         symbol* literal = quadHandle.tempVars[quadHandle.tempVars.size()-2];
         string startLabel = quadHandle.generateLabel();
         symbol* compare = quadHandle.math_op(operation::Minus, literal, $2);
@@ -445,6 +529,8 @@ switch_closing:
         quadHandle.tempLabels.push_back(startLabel);
         quadHandle.jump_cond_op(compare, startLabel, false);
     } statement BREAK ';' {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
         string mainLabel = quadHandle.tempLabels[quadHandle.tempLabels.size()-2];
         string endLabel = quadHandle.tempLabels.back();
         quadHandle.tempLabels.pop_back();
@@ -464,86 +550,131 @@ expression :
     |
     function_call {$$ = $1;}
     |
-    expression PLUS expression {symbol* rizz = quadHandle.math_op(operation::Plus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression PLUS expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.math_op(operation::Plus, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression MINUS expression {symbol* rizz = quadHandle.math_op(operation::Minus, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression MINUS expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.math_op(operation::Minus, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression MUL expression {symbol* rizz = quadHandle.math_op(operation::Mul, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression MUL expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.math_op(operation::Mul, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression DIV expression {symbol* rizz = quadHandle.math_op(operation::Div, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression DIV expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.math_op(operation::Div, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression MOD expression {symbol* rizz = quadHandle.math_op(operation::Mod, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression MOD expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.math_op(operation::Mod, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression BIT_AND expression {symbol* rizz = quadHandle.bit_op(operation::Bit_and, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression BIT_AND expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.bit_op(operation::Bit_and, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression BIT_OR expression {symbol* rizz = quadHandle.bit_op(operation::Bit_or, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression BIT_OR expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.bit_op(operation::Bit_or, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression BIT_XOR expression {symbol* rizz = quadHandle.bit_op(operation::Bit_xor, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression BIT_XOR expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.bit_op(operation::Bit_xor, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    MINUS expression {symbol* rizz = quadHandle.unary_op(operation::Neg, $2); if(!rizz) YYABORT; $$ = rizz;}
+    MINUS expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.unary_op(operation::Neg, $2); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression EQ expression {symbol* rizz = quadHandle.rel_op(operation::Eq, $1, $3);if (!rizz) YYABORT;$$ = rizz;}
+    expression EQ expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.rel_op(operation::Eq, $1, $3);if (!vaiable) YYABORT;$$ = vaiable;}
     |
-    expression NEQ expression {symbol* rizz = quadHandle.rel_op(operation::Neq, $1, $3);if (!rizz) YYABORT;$$ = rizz;}
+    expression NEQ expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.rel_op(operation::Neq, $1, $3);if (!vaiable) YYABORT;$$ = vaiable;}
     |
-    expression LT expression {symbol* rizz = quadHandle.rel_op(operation::Lt, $1, $3);if (!rizz) YYABORT;$$ = rizz;}
+    expression LT expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.rel_op(operation::Lt, $1, $3);if (!vaiable) YYABORT;$$ = vaiable;}
     |
-    expression GT expression {symbol* rizz = quadHandle.rel_op(operation::Gt, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression GT expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.rel_op(operation::Gt, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression LTE expression {symbol* rizz = quadHandle.rel_op(operation::Lte, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression LTE expression { quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.rel_op(operation::Lte, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression GTE expression {symbol* rizz = quadHandle.rel_op(operation::Gte, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression GTE expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.rel_op(operation::Gte, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    NOT expression {symbol* rizz = quadHandle.unary_op(operation::Not, $2); if(!rizz) YYABORT; $$ = rizz;}
+    NOT expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.unary_op(operation::Not, $2); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression AND expression {symbol* rizz = quadHandle.logic_op(operation::And, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression AND expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.logic_op(operation::And, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
-    expression OR expression {symbol* rizz = quadHandle.logic_op(operation::Or, $1, $3); if(!rizz) YYABORT; $$ = rizz;}
+    expression OR expression {quadHandle.lineNumber = yylineno; symbol* vaiable = quadHandle.logic_op(operation::Or, $1, $3); if(!vaiable) YYABORT; $$ = vaiable;}
     |
     literal {$$ = $1;}
     ;
 
 unary_expression:
-    ID INC      {symbol* rizz = symbolTable::current->findSymbol($1); if(!rizz) YYABORT; $$ = quadHandle.unary_op(operation::Inc, rizz);}
+    ID INC      {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* vaiable = symbolTable::current->updateSymbol($1);
+        if(vaiable==NULL){
+            vaiable = new symbol($1, symbolType::ERROR, 1,1);
+        }  
+        $$ = quadHandle.unary_op(operation::Inc, vaiable);
+     }
     |
-    ID DEC      {symbol* rizz = symbolTable::current->findSymbol($1); if(!rizz) YYABORT; $$ = quadHandle.unary_op(operation::Dec, rizz);}
+    ID DEC       {
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* vaiable = symbolTable::current->updateSymbol($1);
+        if(vaiable==NULL){
+            vaiable = new symbol($1, symbolType::ERROR, 1,1);
+        }  
+        $$ = quadHandle.unary_op(operation::Dec, vaiable);
+     }
     ;
 
 
 assignment :
-    ID ASSIGN expression {            
-        symbol* sym = symbolTable::current->findSymbolDeclared($1);
-        if (!sym) YYABORT;
+    ID ASSIGN expression {     
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;       
+        symbol* sym = symbolTable::current->updateSymbol($1);
+        if(sym == NULL){
+            sym = new symbol($1, symbolType::ERROR, 1,1);
+        }
         quadHandle.assign_op(operation::Assign, sym, $3);
     }
     |
     ID ADD_ASSIGN expression {
-        symbol* sym = symbolTable::current->findSymbolDeclared($1);
-        if (!sym) YYABORT;
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* var = symbolTable::current->useSymbol($1);
+        symbol* sym = symbolTable::current->updateSymbol($1);
+        if(sym == NULL){
+            sym = new symbol($1, symbolType::ERROR, 1,1);
+        }
         quadHandle.assign_op(operation::Add_assign, sym, $3);
     }
     |
     ID SUB_ASSIGN expression {
-        symbol* sym = symbolTable::current->findSymbolDeclared($1);
-        if (!sym) YYABORT;
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* var = symbolTable::current->useSymbol($1);
+        symbol* sym = symbolTable::current->updateSymbol($1);
+        if(sym == NULL){
+            sym = new symbol($1, symbolType::ERROR, 1,1);
+        }
         quadHandle.assign_op(operation::Sub_assign, sym, $3);
     }
     |
     ID MUL_ASSIGN expression {
-        symbol* sym = symbolTable::current->findSymbolDeclared($1);
-        if (!sym) YYABORT;
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* var = symbolTable::current->useSymbol($1);
+        symbol* sym = symbolTable::current->updateSymbol($1);
+        if(sym == NULL){
+            sym = new symbol($1, symbolType::ERROR, 1,1);
+        }
         quadHandle.assign_op(operation::Mul_assign, sym, $3);
     }
     |
     ID DIV_ASSIGN expression {
-        symbol* sym = symbolTable::current->findSymbolDeclared($1);
-        if (!sym) YYABORT;
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* var = symbolTable::current->useSymbol($1);
+        symbol* sym = symbolTable::current->updateSymbol($1);
+        if(sym == NULL){
+            sym = new symbol($1, symbolType::ERROR, 1,1);
+        }
         quadHandle.assign_op(operation::Div_assign, sym, $3);
     }
     |
     ID MOD_ASSIGN expression {
-        symbol* sym = symbolTable::current->findSymbolDeclared($1);
-        if (!sym) YYABORT;
+        symbTable.lineNumber = yylineno;
+        quadHandle.lineNumber = yylineno;
+        symbol* var = symbolTable::current->useSymbol($1);
+        symbol* sym = symbolTable::current->updateSymbol($1);
+        if(sym == NULL){
+            sym = new symbol($1, symbolType::ERROR, 1,1);
+        }
         quadHandle.assign_op(operation::Mod_assign, sym, $3);
     }
     ;
@@ -552,11 +683,9 @@ literal :
     ID  {
         symbTable.lineNumber = yylineno;
         quadHandle.lineNumber = yylineno;
-        symbol* temp = symbTable.findSymbol(string($1));
+        symbol* temp = symbTable.useSymbol(string($1));
         if (temp == NULL) {
                 temp = new symbol($1, symbolType::ERROR, 1,1);
-        }else{
-        symbTable.setUsed(temp);
         }
         $$ = temp;
     }   
@@ -607,8 +736,7 @@ void yyerror(const char *msg){
 }
 
 void yywarn(const char *msg){
-    fprintf(stderr, "Warning: %s\n", msg);
-    fprintf(stdout, "\nWarning: %s\n", msg);
+    errorManager.add(WARNING, yylineno, "", msg);
 }
 
 

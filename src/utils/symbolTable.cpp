@@ -33,124 +33,60 @@ void symbolTable::changeScope(bool direction)
     cout << "Entered new scope: " << current->scope << endl;
 }
 
-/*
-type: declaration type of the symbol
-value: value of the symbol to be updated
-*/
-symbol *symbolTable::addOrUpdateSymbol(string name, symbolType type, symbol *value, bool isConst, bool isInitialization)
-{   
-    symbolTable *root = current;
-    bool firstIteration = true;
-    while (root != NULL)
-    {
-        auto foundSymbol = root->symbols.find(name);
-        if (foundSymbol != root->symbols.end())
-        {
-            // if it is a declaration
-            if (type != UNKNOWN)
-            {
-                if (firstIteration)
-                {
-                    string error = "Symbol " + name + " already exists in this scope.";
-
-                    // yyerror(error.c_str());
-                    errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-                    return NULL;
-                }
-                else
-                {
-                    symbol *newSymbol = new symbol(name, type, isConst, isInitialization);
-                    current->symbols.insert({name, newSymbol});
-                    return current->symbols[name];
-                }
-            }
-            // if it is a reference
-            else
-            {
-                if (foundSymbol->second->isConst)
-                {
-                    string error = "Symbol " + name + " is a constant, you can't update it.";
-                    // yyerror(error.c_str());
-                    errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-                    return NULL;
-                }
-                else
-                {
-                    foundSymbol->second->isInitializated = isInitialization;
-                    return foundSymbol->second;
-                }
-            }
-        }
-
-        root = root->parent;
-        firstIteration = false;
-    }
-    delete root;
-
-    // if the symbol is not found in any of the parent scopes, new symbol
-    if (type == UNKNOWN)
-    {
-        string error = "Symbol " + name + " must be declared first.";
-        errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-        return NULL;
-    }
-    else
-    {
-        symbol *newSymbol = new symbol(name, type, isConst, isInitialization);
-        current->symbols.insert({name, newSymbol});
-        return current->symbols[name];
-    }
-}
-
 symbol *symbolTable::addSymbol(string name, symbolType type, bool isConst, bool isInitialization)
 {
-    printf("Adding symbol %s\n", name.c_str());
+
     if (isConst && !isInitialization)
     {
-        // yyerror(("Constant " + name + " must be initialized at declaration.").c_str());
-        string error = "Constant " + name + " must be initialized at declaration.";
-        errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-        return NULL;
+        errorManager.add(
+            ErrorType::SEMANTIC, lineNumber, name,
+            "Constant " + name + " must be initialized at declaration.");
+        return nullptr;
     }
-    if (current->symbols.find(name) != current->symbols.end())
+
+    symbol *existing = findSymbol(name);
+    if (existing)
     {
-        // yyerror(("Symbol " + name + " already exists in this scope.").c_str());
-        string error = "Symbol " + name + " already exists in this scope.";
-        errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-        return NULL;
+
+        if (current->symbols.count(name))
+        {
+            errorManager.add(
+                ErrorType::SEMANTIC, lineNumber, name,
+                "Symbol " + name + " already exists in this scope.");
+        }
+        else
+        {
+            errorManager.add(
+                ErrorType::SEMANTIC, lineNumber, name,
+                "Symbol " + name + " already declared in an outer scope; shadowing is not allowed.");
+        }
+        return nullptr;
     }
 
     symbol *newSym = new symbol(name, type, isConst, isInitialization);
-    current->symbols.insert({name, newSym});
+    current->symbols[name] = newSym;
     return newSym;
 }
 
 symbol *symbolTable::updateSymbol(string name)
 {
-    symbolTable *scope = current;
-    while (scope)
+    symbol *sym = findSymbol(name);
+    if (!sym)
     {
-        auto it = scope->symbols.find(name);
-        if (it != scope->symbols.end())
-        {
-            symbol *sym = it->second;
-            if (sym->isConst)
-            {
-                // yyerror(("Symbol " + name + " is a constant and cannot be updated.").c_str());
-                string error = "Symbol " + name + " is a constant and cannot be updated.";
-                errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-
-                return NULL;
-            }
-            return sym;
-        }
-        scope = scope->parent;
+        errorManager.add(
+            ErrorType::SEMANTIC, lineNumber, name,
+            "Symbol " + name + " must be declared before use.");
+        return NULL;
     }
-
-    // yyerror(("Symbol " + name + " must be declared before use.").c_str());
-    string error = "Symbol " + name + " must be declared before use.";
-    errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-    return NULL;
+    if (sym->isConst)
+    {
+        errorManager.add(
+            ErrorType::SEMANTIC, lineNumber, name,
+            "Symbol " + name + " is a constant and cannot be updated.");
+        return NULL;
+    }
+    sym->isInitializated = true;
+    return sym;
 }
 
 symbol *symbolTable::setUsed(symbol *sym)
@@ -167,42 +103,32 @@ symbol *symbolTable::findSymbol(string name)
         auto foundSymbol = root->symbols.find(name);
         if (foundSymbol != root->symbols.end())
         {
-            if (foundSymbol->second->isInitializated == true)
-            {
-                return foundSymbol->second;
-            }
-            else
-            {
-                string error = "Symbol " + name + " is not initialized.";
-                errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-                // yyerror(error.c_str());
-                return NULL;
-            }
-        }
-        root = root->parent;
-    }
-    string error = "Symbol " + name + " is not declared.";
-    // yyerror(error.c_str());
-    errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
-    return NULL;
-}
-
-symbol *symbolTable::findSymbolDeclared(string name)
-{
-    symbolTable *root = current;
-    while (root != NULL)
-    {
-        auto foundSymbol = root->symbols.find(name);
-        if (foundSymbol != root->symbols.end())
-        {
             return foundSymbol->second;
         }
         root = root->parent;
     }
-    string error = "Symbol " + name + " is not declared.";
-    // yyerror(error.c_str());
-    errorManager.add(ErrorType::SEMANTIC, lineNumber, name, error);
     return NULL;
+}
+
+symbol *symbolTable::useSymbol(string name)
+{
+    symbol *sym = findSymbol(name);
+    if (!sym)
+    {
+        errorManager.add(
+            ErrorType::SEMANTIC, lineNumber, name,
+            "Symbol " + name + " is not declared.");
+        return NULL;
+    }
+    if (!sym->isInitializated)
+    {
+        errorManager.add(
+            ErrorType::SEMANTIC, lineNumber, name,
+            "Symbol " + name + " is not initialized.");
+        return NULL;
+    }
+    sym->isUsed = true;
+    return sym;
 }
 
 void symbolTable::printSymbolTable(symbolTable *root)
