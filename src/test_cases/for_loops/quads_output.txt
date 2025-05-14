@@ -1,0 +1,45 @@
+proc INT main 
+assign n 0  
+assign a 0  
+L0:
+lt t0 a n 
+jmp L1 on t0 false
+inc a  
+assign a 0  
+jmp L0
+L1:
+assign a 0  
+L2:
+eq t1 a n 
+jmp L3 on t1 false
+inc a  
+assign a 0  
+jmp L2
+L3:
+assign a 0  
+L4:
+lte t2 a n 
+jmp L5 on t2 false
+mul t3 a 2 
+assign a t3  
+assign a 0  
+jmp L4
+L5:
+assign a 0  
+L6:
+lte t4 a n 
+jmp L7 on t4 false
+assign a 2  
+assign a 0  
+jmp L6
+L7:
+assign a 0  
+L8:
+jmp L9 on a false
+assign a 2  
+assign a 0  
+jmp L8
+L9:
+return 0
+
+

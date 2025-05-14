@@ -11,23 +11,13 @@ inc z
 return y
 
 
-proc BOOL wrong2 INT fff 
-inc fff  
-CAST 0 to BOOL
-return 0
-
-
 proc INT main 
 assign x 0  
 assign a 1  
 assign b 2  
-assign ff "hi"  
-call wrong2 t1 a 
-assign d t1  
-call sum t2 a b 
-assign c t2  
-call voo t3 x 
-call sum t4 a b 
+assign ff "hi" 
+call sum t1 a b 
+assign c t1  
+call voo t2 x 
+call sum t3 a b 
 return 0
-
-

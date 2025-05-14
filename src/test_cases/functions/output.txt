@@ -1,0 +1,81 @@
+starting...
+Entered new scope: 1
+function return type: 4
+expression type: 4
+Return statement end
+Entered new scope: 0
+Function_definition end
+Entered new scope: 2
+Expression
+Return statement end
+Entered new scope: 0
+Function_definition end
+Entered new scope: 3
+Expression
+function return type: 7
+expression type: 7
+Return statement end
+Entered new scope: 0
+Function_definition end
+Entered new scope: 4
+Initialization
+Initialization
+Initialization
+Initialization
+Initialization
+Expression
+Expression
+function return type: 4
+expression type: 4
+Return statement end
+Entered new scope: 0
+Function_definition end
+
+---------------
+
+Scope 0:
+STRING fun
+INT main
+INT sum
+VOID voo
+
+
+
+---------------
+
+Scope 1:
+INT x
+INT y
+
+
+
+---------------
+
+Scope 2:
+INT x
+
+
+
+---------------
+
+Scope 3:
+STRING y
+INT z
+
+
+
+---------------
+
+Scope 4:
+INT a
+INT b
+INT c
+STRING ff
+INT x
+
+
+[Warning] Line 41 near '': Symbol ** x ** is declared but not used.
+[Warning] Line 41 near '': Symbol ** z ** is declared but not used.
+[Warning] Line 41 near '': Symbol ** c ** is declared but not used.
+[Warning] Line 41 near '': Symbol ** ff ** is declared but not used.
+cleanup done

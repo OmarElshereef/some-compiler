@@ -1,0 +1,51 @@
+int main() {
+    int x = 2;
+    char c = 'A';
+    string s = "hello";
+    bool b = true;
+
+    // integer switch
+    switch (x) {
+        case 0:      
+            x = 0;
+            break;
+        case 1:     
+            x = 1;
+            break;
+        default:    
+            x = -1;
+            break;
+    }
+
+    // Char‐based switch
+    switch (c) {
+        case 'A':
+            c = 'B';
+            break;
+        case 'B':
+            c = 'C';
+            break;
+        default:
+            c = 'Z';
+            break;
+    }
+
+    //  Boolean switch
+    switch (b) {
+        case true:
+            b = false;
+            break;
+        case false:
+            b = true;
+            break;
+    }
+
+    // Missing colon—should be an error
+    //switch (x) {
+    //    case 2      // ERROR: missing ':'
+    //        x = 2;
+    //        break;
+    //}
+
+    return 0;
+}

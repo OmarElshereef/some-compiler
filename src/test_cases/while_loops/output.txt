@@ -1,0 +1,61 @@
+starting...
+Initialization
+Initialization
+Entered new scope: 1
+Entered new scope: 2
+Assignment
+Expression
+Entered new scope: 1
+Scope end
+While loop end
+Entered new scope: 3
+Initialization
+Entered new scope: 4
+Expression
+Entered new scope: 3
+Scope end
+While loop end
+Expression
+Entered new scope: 1
+Scope end
+While loop end
+function return type: 4
+expression type: 4
+Return statement end
+Entered new scope: 0
+Function_definition end
+
+---------------
+
+Scope 0:
+INT i
+INT main
+INT sum
+
+
+
+---------------
+
+Scope 1:
+
+
+
+---------------
+
+Scope 2:
+
+
+
+---------------
+
+Scope 3:
+INT j
+
+
+
+---------------
+
+Scope 4:
+
+
+cleanup done

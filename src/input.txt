@@ -1,51 +1,75 @@
-int square(int x) {
-    return x * x;
-}
+/* block comment
+   spanning lines */
 
-float multiply(float a, float b) {
-    return a * b;
-}
+const int C = 100;
+lint L = 123456;
+llint LL = 9876543210;
+float F = 1.5;
+double D;
+char ch = 'Z';
+string msg = "Test";
+bool flag = false;
 
+/* simple char→char function */
 char to_upper(char c) {
     return c;
 }
 
-void print_hello() {
-    char c = 'H';
+/* unary, arithmetic, return */
+int negate(int x) {
+    return -x;
+}
+
+/* do-while loop */
+void side_effect() {
     int i = 0;
-    while (i < 5) {
-        c = to_upper(c);
+    do {
         i = i + 1;
-    }
+    } while (i < 3);
 }
 
-int average(int a, int b, int c) {
-    int sum = a + b + c;
-    return sum / 3;
-}
-int max(int a, int b) {
-    if (a > b) {
-        return a;
+/* if / else, relational, logical, bitwise */
+int complex_fn(int a, int b, int c) {
+    int result = a * b + c;
+    if ( (result >= 50 && b != 0) ) {
+        result = result ^ C;      // bitwise XOR
     } else {
-        return b;
+        result = result & C;      // bitwise AND
+    }
+    return result;
+}
+
+/* for-loop + nested if + function call */
+void loop_test() {
+    for (int i = 0; i < 2; i++) {
+        ch = to_upper(ch);
+        if (!flag) {
+            ch = 'A';
+        }
     }
 }
 
-int zomba(){
-    int c = 1;
-}
-// asdfafs
-
-/*adasdf*/
+/* everything together in main */
 int main() {
+    // assignment, arithmetic, function calls
+    double D2 = F / 2;
+    flag = true;
+    int neg = negate(-5);
+    side_effect();
+    int comp = complex_fn(2, 3, 4);
+    loop_test();
 
-    int x = average(1, 2, 3);
-    int y = square(x);
-    char c = 'h';
-    int i = 0;
-    int z = average(x, y, i);
-    c = to_upper(c);
-    print_hello();
+    // while-loop + unary post-inc
+    int x = 0;
+    while (x < 2) {
+        x++;
+    }
+
+    // switch with case & default
+    switch (x) {
+        case 0: msg = "zero"; break;
+        default: msg = "other"; break;
+    }
 
     return 0;
 }

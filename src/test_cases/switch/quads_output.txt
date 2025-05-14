@@ -1,0 +1,52 @@
+proc INT main 
+assign x 2  
+CAST 'A' to CHAR
+assign c 'A'  
+assign s "hello"  
+assign b true  
+minus t0 x 0 
+jmp L1 on t0 false
+assign x 0  
+jmp L0
+L1:
+minus t1 0 1 
+jmp L2 on t1 false
+assign x 1  
+jmp L0
+L2:
+assign x -1  
+L0:
+CAST 'A' to CHAR
+minus t2 c 'A' 
+jmp L4 on t2 false
+CAST 'B' to CHAR
+assign c 'B'  
+jmp L3
+L4:
+CAST 'B' to CHAR
+minus t3 'B' 'B' 
+jmp L5 on t3 false
+CAST 'C' to CHAR
+assign c 'C'  
+jmp L3
+L5:
+CAST 'Z' to CHAR
+assign c 'Z'  
+L3:
+minus t4 b true 
+jmp L7 on t4 false
+CAST false to INT
+assign b false  
+jmp L6
+L7:
+CAST false to BOOL
+minus t5 false false 
+jmp L8 on t5 false
+CAST true to INT
+assign b true  
+jmp L6
+L8:
+L6:
+return 0
+
+

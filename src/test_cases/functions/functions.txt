@@ -1,0 +1,35 @@
+int sum(int x, int y) {
+    return x + y; 
+}
+
+void voo(int x){
+    x++;
+    return;
+}
+
+string fun(int z, string y){
+    z++;
+    return y;
+}
+
+//void wrong(int x){
+//    return x;
+//}
+
+//bool wrong2(int fff){
+    //fff++;
+   //return 0;
+//}
+
+int main() {
+    int x = 0;
+    int a = 1;
+    int b = 2;
+    string ff = "hi";
+  //bool d = wrong2(a);
+    int c = sum(a,b);
+    voo(x);
+    //fun(ff,a);
+    sum(a,b);
+    return 0;
+}

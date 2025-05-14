@@ -1,0 +1,44 @@
+starting...
+Entered new scope: 1
+Initialization
+Initialization
+Initialization
+Initialization
+Assignment
+Assignment
+Assignment
+switch end
+Switch case end
+Assignment
+Assignment
+Assignment
+switch end
+Switch case end
+Assignment
+Assignment
+switch end
+Switch case end
+function return type: 4
+expression type: 4
+Return statement end
+Entered new scope: 0
+Function_definition end
+
+---------------
+
+Scope 0:
+INT main
+
+
+
+---------------
+
+Scope 1:
+INT b
+CHAR c
+STRING s
+INT x
+
+
+[Warning] Line 52 near '': Symbol ** s ** is declared but not used.
+cleanup done
